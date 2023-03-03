@@ -1,1 +1,11 @@
 flask-ckeditor
+pymongo
+flask
+pyfiglet
+flask_cors
+mysql-connector-python
+openai
+bs4
+wtforms
+habanero
+selenium

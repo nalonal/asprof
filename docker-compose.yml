@@ -41,7 +41,7 @@ services:
       - PGID=1000
       - TZ=Europe/London
       - PASSWORD=2wsx@WSX1qazZAQ! #optional
-      - DEFAULT_WORKSPACE=/home/cth #optional
+      - DEFAULT_WORKSPACE=/home/asprof #optional
       # - HASHED_PASSWORD= #optional
       # - SUDO_PASSWORD=password #optional
       # - SUDO_PASSWORD_HASH= #optional
