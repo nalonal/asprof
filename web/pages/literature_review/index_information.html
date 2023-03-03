@@ -1,0 +1,65 @@
+
+<div class="row">  
+  <div class="col-md-12 col-sm-12 ">
+    <div class="x_panel">
+      <div class="x_title">
+        <p style="width: 100%; color: black; overflow-wrap: break-word; font-size: 20px;"><a href="{{ url_for('literature_review') }}" class="btn btn-info btn-sms" style="font-size: 12px"><i class="fa fa-arrow-left"></i> Back</a><br>{{ title }} : {{ output['data']['research_title'] }}</p>
+        <div class="clearfix"></div>
+      </div>
+      <div class="x_content">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <div class="container bootdey">
+      <div class="email-app">
+          <nav>
+              <!-- <a href="#" class="btn btn-danger btn-block">New Email</a> -->
+              <ul class="nav" style="font-size: 14px;">
+                  
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('literature_review_id', id=id) }}">General Information</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_ri', id=id) }}">Research Map</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_rk', id=id) }}">Research Keyword</a>
+              </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('literature_review_as', id=id) }}">Automation Status</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Literature Review</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('literature_review_io', id=id) }}">Output</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('literature_review_ie', id=id) }}">Export</a>
+                  </li>
+              </ul>
+          </nav>
+          <main>
+              <h2 class="text-center" style="color: black;">Research Information</h2>
+                  <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">Project Name</label>
+                    <input type="text" class="form-control" id="input_research_title" placeholder="Research Title" value="{{ output['data'][1] }}">
+                  </div>
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">Author</label>
+                    <input type="text" class="form-control" id="input_research_author" placeholder="Research Author" value="{{ output['data'][2] }}">
+                  </div>
+                 <div class="form-group">
+                  <button id="save_research_information" class="btn btn-success">Save Research Information</button>
+                  <button id="save_research_remove" class="btn btn-danger">Remove Project Research</button>
+              </div>
+
+          </main>
+      </div>
+    </div>
+    </div>
+    <!-- XPANEL -->
+  </div>
+  <!-- COL-12 -->
+</div>
+<!-- ROW -->

@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+  # Database
+  db:
+    platform: linux/x86_64
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 2wsx@WSX1qazZAQ!
+      MYSQL_DATABASE: asprof_db
+      MYSQL_PASSWORD: 2wsx@WSX1qazZAQ!
+    networks:
+      - mysql-phpmyadmin
+
+  # phpmyadmin
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin
+    restart: always
+    ports:
+      - "8090:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: 2wsx@WSX1qazZAQ!
+    networks:
+      - mysql-phpmyadmin
+      #############################################
+  #       INSTALLER VISUAL STUDIO CODE        #
+  #############################################
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: vs-cth-dashboard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - PASSWORD=2wsx@WSX1qazZAQ! #optional
+      - DEFAULT_WORKSPACE=/home/cth #optional
+      # - HASHED_PASSWORD= #optional
+      # - SUDO_PASSWORD=password #optional
+      # - SUDO_PASSWORD_HASH= #optional
+      # - PROXY_DOMAIN=code-server.my.domain #optional
+      
+    volumes:
+      - .:/home/asprof
+    ports:
+      - 10001:8443
+    restart: unless-stopped
+    networks:
+      - mysql-phpmyadmin
+
+networks:
+  mysql-phpmyadmin:
+
+volumes:
+  db_data:

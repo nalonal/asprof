@@ -1,0 +1,73 @@
+
+<div class="row">  
+  <div class="col-md-12 col-sm-12 ">
+    <div class="x_panel">
+      <div class="x_title">
+        <p style="width: 100%; color: black; overflow-wrap: break-word; font-size: 20px;"><a href="{{ url_for('literature_review') }}" class="btn btn-info btn-sms" style="font-size: 12px"><i class="fa fa-arrow-left"></i> Back</a><br>{{ title }} : {{ output['data']['research_title'] }}</p>
+        <div class="clearfix"></div>
+      </div>
+      <div class="x_content">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <div class="container bootdey">
+      <div class="email-app">
+          <nav>
+              <!-- <a href="#" class="btn btn-danger btn-block">New Email</a> -->
+              <ul class="nav" style="font-size: 14px;">
+                  
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('literature_review_id', id=id) }}">General Information</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_ri', id=id) }}">Research Map</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_rk', id=id) }}">Research Keyword</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_as', id=id) }}">Automation Status</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Literature Review</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_io', id=id) }}">Output</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_ie', id=id) }}">Export</a>
+              </li>
+                    
+              </ul>
+          </nav>
+          <main class="inbox">
+              <h2 class="text-center" style="color: black;">Literature Review</h2>
+              <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
+              <ul class="messages">
+                <li class="message">
+                    <a href="#">
+                        <div class="actions" style="padding-left: 30px;">
+                          <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                        </div>
+                        <div class="header">
+                            <span class="from">Lukasz Holeczek</span>
+                            <span class="date">
+                            <span class="fa fa-paper-clip"></span> Today, 3:47 PM</span>
+                        </div>
+                        <div class="title">
+                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                        </div>
+                        <div class="description">
+                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                        </div>
+                    </a>
+                </li>
+              </ul>
+          </main>
+      </div>
+    </div>
+    </div>
+    <!-- XPANEL -->
+  </div>
+  <!-- COL-12 -->
+</div>
+<!-- ROW -->

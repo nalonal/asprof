@@ -1,0 +1,23 @@
+<div class="col-md-3 left_col">
+  <div class="left_col scroll-view">
+    <div class="navbar nav_title" style="border: 0;">
+      <a href="index.html" class="site_title"><img src="{{ url_for('static', filename='assets/images/sharingan2.png') }}"><span style="font-size: 18px">Assistant Professor</span></a>
+    </div>
+
+    <div class="clearfix"></div>
+    <br>
+    <!-- sidebar menu -->
+    <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+      <div class="menu_section">
+        <h3>Research</h3>
+        <ul class="nav side-menu">
+          <li><a href="{{ url_for('literature_review') }}"><i class="fa fa-book"></i>Literature Review</a></li>
+          <!-- <li><a href="javascript:void(0)"><i class="fa fa-book"></i>Technology Review</a></li> -->
+          <li><a href="{{ url_for('setting') }}"><i class="fa fa-gear"></i>Setting</a></li>
+        </ul>
+      </div>
+
+    </div>
+    <!-- /sidebar menu -->
+  </div>
+</div>

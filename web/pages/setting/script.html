@@ -1,0 +1,40 @@
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<!-- AJAX BROO -->
+<script>
+$(document).ready(function(){
+  $("#save").click(function(){
+  	var FACEBOOK_SESSION = $("#FACEBOOK_SESSION"). val();
+  	var OPENGPT_SESSION_1 = $("#OPENGPT_SESSION_1"). val();
+	var OPENGPT_SESSION_2 = $("#OPENGPT_SESSION_2"). val();
+	var OPENGPT_SESSION_3 = $("#OPENGPT_SESSION_3"). val();
+	var OPENGPT_SESSION_4 = $("#OPENGPT_SESSION_4"). val();
+	$.ajax({
+		type: "POST",
+		url: root+'/setting/update',
+		data: JSON.stringify({'FACEBOOK_SESSION':FACEBOOK_SESSION,'OPENGPT_SESSION_1':OPENGPT_SESSION_1,'OPENGPT_SESSION_2':OPENGPT_SESSION_2,'OPENGPT_SESSION_3':OPENGPT_SESSION_3,'OPENGPT_SESSION_4':OPENGPT_SESSION_4}),
+		dataType: 'json',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		success: function(output)
+		{
+			location.reload();
+		},
+		error: function (data)
+		{
+		}
+	});
+
+  });
+});
+</script>

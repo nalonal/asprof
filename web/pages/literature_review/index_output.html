@@ -1,0 +1,55 @@
+
+<div class="row">  
+    <div class="col-md-12 col-sm-12 ">
+      <div class="x_panel">
+        <div class="x_title">
+          <p style="width: 100%; color: black; overflow-wrap: break-word; font-size: 20px;"><a href="{{ url_for('literature_review') }}" class="btn btn-info btn-sms" style="font-size: 12px"><i class="fa fa-arrow-left"></i> Back</a><br>{{ title }} : {{ output['data']['research_title'] }}</p>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+      <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+  
+      <div class="container bootdey">
+        <div class="email-app">
+          <nav>
+            <!-- <a href="#" class="btn btn-danger btn-block">New Email</a> -->
+            <ul class="nav" style="font-size: 14px;">
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('literature_review_id', id=id) }}">General Information</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('literature_review_ri', id=id) }}">Research Map</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('literature_review_rk', id=id) }}">Research Keyword</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('literature_review_as', id=id) }}">Automation Status</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Literature Review</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('literature_review_io', id=id) }}">Output</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('literature_review_ie', id=id) }}">Export</a>
+            </li>
+                
+            </ul>
+        </nav>
+            <main>
+                <h2 style="color: black;">Research Output Editor<button id="output_generate_research" style="float:right" class="btn btn-success btn-sm">Generate Text From Research</button><button id="output_save_research" style="float:right" class="btn btn-info btn-sm">Save Research Result</button></h2><br>
+                {{ ckeditor.load() }}
+                {{ ckeditor.create(name="text", value="insert text in here") }}
+                {{ ckeditor.config(name='text') }}
+            </main>
+        </div>
+      </div>
+      </div>
+      <!-- XPANEL -->
+    </div>
+    <!-- COL-12 -->
+  </div>
+  <!-- ROW -->
+  

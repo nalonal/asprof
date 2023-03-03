@@ -1,0 +1,58 @@
+
+<div class="row">  
+  <div class="col-md-12 col-sm-12 ">
+    <div class="x_panel">
+      <div class="x_content">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <div class="container bootdey">
+      <div class="email-app">
+          <nav>
+              <!-- <a href="#" class="btn btn-danger btn-block">New Email</a> -->
+              <ul class="nav" style="font-size: 14px;">
+                  <li class="nav-item">
+                      <a class="nav-link" href="{{ url_for('setting') }}">API & Token</a>
+                  </li>
+              </ul>
+          </nav>
+          <main>
+              <h2 class="text-center">API & Token Information</h2>
+              <!-- <form> -->
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">Facebook</label>
+                    <textarea class="form-control" id="FACEBOOK_SESSION" rows="3" placeholder="Facebook Session Token">{{ output['data']['FACEBOOK_SESSION'] }}</textarea>
+                  </div>
+
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">ChatGPT Token 1</label>
+                    <textarea class="form-control" id="OPENGPT_SESSION_1" rows="3" placeholder="OpenGPT Session 1">{{ output['data']['OPENGPT_SESSION_1'] }}</textarea>
+                  </div>
+
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">ChatGPT Token 2</label>
+                    <textarea class="form-control" id="OPENGPT_SESSION_2" rows="3" placeholder="OpenGPT Session 2">{{ output['data']['OPENGPT_SESSION_2'] }}</textarea>
+                  </div>
+
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">ChatGPT Token 3</label>
+                    <textarea class="form-control" id="OPENGPT_SESSION_3" rows="3" placeholder="OpenGPT Session 3">{{ output['data']['OPENGPT_SESSION_3'] }}</textarea>
+                  </div>
+
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">ChatGPT Token 4</label>
+                    <textarea class="form-control" id="OPENGPT_SESSION_4" rows="3" placeholder="OpenGPT Session 4">{{ output['data']['OPENGPT_SESSION_4'] }}</textarea>
+                  </div>
+
+                <div class="form-group">
+                  <button id="save" class="btn btn-success">Save Change</button>
+              </div>
+              <!-- </form> -->
+          </main>
+      </div>
+    </div>
+    </div>
+    <!-- XPANEL -->
+  </div>
+  <!-- COL-12 -->
+</div>
+<!-- ROW -->

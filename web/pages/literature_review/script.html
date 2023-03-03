@@ -1,0 +1,139 @@
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
+<!-- AJAX BROO -->
+<script>
+$(document).ready(function(){
+  $("#tambah_action").click(function(){
+  	var research_title = $("#research_title"). val();
+  	var research_author = $("#research_author"). val();
+	$.ajax({
+		type: "POST",
+		url: root+'/literature_review/add',
+		data: JSON.stringify({'research_title':research_title,'research_author':research_author}),
+		dataType: 'json',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		success: function(output)
+		{
+			location.reload();
+		},
+		error: function (data)
+		{
+		}
+	});
+
+  });
+
+
+  $("#save_research_information").click(function(){
+
+  	var id = $("#input_research_id"). val();
+  	var research_title = $("#input_research_title"). val();
+	var research_author = $("#input_research_author"). val();
+	
+	$.ajax({
+		type: "POST",
+		url: root+'/literature_review/update',
+		data: JSON.stringify({'id':id,'research_title':research_title,'research_author':research_author}),
+		dataType: 'json',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		success: function(output)
+		{
+			location.reload();
+		},
+		error: function (data)
+		{
+		}
+	});
+
+  });
+
+
+  $("#save_research_map").click(function(){
+		layoutAll()
+		var id = $("#input_research_id"). val();
+		var research_introduction = $("#input_research_introduction"). val();
+		var research_literature = $("#input_research_literature"). val();
+		var research_methodology = $("#input_research_methodology"). val();
+		var research_keyword = $("#input_research_keyword"). val();
+
+		$.ajax({
+		type: "POST",
+		url: root+'/literature_review/update_map',
+		data: JSON.stringify({'id':id,'research_introduction':research_introduction, 'research_literature':research_literature,'research_methodology':research_methodology, 'research_keyword':research_keyword}),
+		dataType: 'json',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		success: function(output)
+		{
+			location.reload();
+		},
+		error: function (data)
+		{
+		}
+		});
+
+		});
+
+	$("#save_research_remove").click(function(){
+		var id = $("#input_research_id"). val();
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/delete',
+			data: JSON.stringify({'id':id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				window.open(root+'/literature_review',"_self")
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+
+
+	// Start AUTOMATION
+	
+
+	$("#start_automation_all").click(function(){
+		var id = $("#input_research_id"). val();
+		// alert(id)
+		$.ajax({
+			type: "POST",
+			url: root+'/api/automate_openai',
+			data: JSON.stringify({'id':id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				// window.open(root+'/literature_review',"_self")
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+
+});
+</script>

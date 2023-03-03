@@ -1,0 +1,22 @@
+<html lang="en">
+  <head>
+    {% include 'template/head.html' %}
+    {% include 'pages/'+page+'/style.html' %}
+    {% include 'template/script.html' %}
+    <title>{{ title }}</title>
+  </head>
+  <body class="nav-md">
+    <div class="container body">
+      <div class="main_container">
+        {% include 'template/sidebar.html' %}
+        {% include 'template/navbar.html' %}
+        <div class="right_col" role="main" style="min-height: 100% !important">  
+          {% include 'pages/'+page+'/'+view_file+'.html' %}
+          <div class="clearfix"></div>
+        </div>
+        {% include 'template/footer.html' %}
+      </div>
+    </div>
+    {% include 'pages/'+page+'/script.html' %}
+  </body>
+</html>
