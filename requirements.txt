@@ -8,4 +8,7 @@ openai
 bs4
 wtforms
 habanero
-selenium
+selenium 
+webdriver-manager
+undetected-chromedriver
+lxml

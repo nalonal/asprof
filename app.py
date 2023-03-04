@@ -27,9 +27,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options  
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import urllib.parse,requests,time
 import re
 
+import undetected_chromedriver as uc 
 
 class GetOpenAPI(threading.Thread):
         def __init__(self, id):
@@ -57,7 +60,7 @@ class GetOpenAPI(threading.Thread):
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
         def request_ai(self, question):
-                openai.api_key = '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'
+                openai.api_key = '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'
                 response = openai.Completion.create(
                         model="text-davinci-003",
                         prompt=question,
@@ -72,7 +75,7 @@ class GetOpenAPI(threading.Thread):
         def looking_scholar(self,input_keyword):
                 conn = dbcon()
                 cur = conn.cursor()
-                conn.row_factory = sql.Row
+                # conn.row_factory = sql.Row
                 this_keyword = urllib.parse.quote(input_keyword).replace("%20", "+")
                 url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword+"+%28site%3Adl.acm.org+OR+site%3Aieeexplore.ieee.org+OR+site%3Asciencedirect.com+OR+site%3Alink.springer.com%29&hl=id&as_sdt=0%2C5&as_ylo=2018&as_yhi=2022"
                 response=requests.get(url,headers=self.headers) 
@@ -94,7 +97,7 @@ class GetOpenAPI(threading.Thread):
                                 data_reference['resume'] = item.select('.gs_rs')[0].get_text()
                                 data_reference['keyword'] = input_keyword
                                 cur.execute("INSERT INTO references_tb(research_id, title, link, resume, keyword) \
-                                        VALUES(?,?,?,?,?)",[research_id,data_reference['title'],data_reference['link'],data_reference['resume'],data_reference['keyword']])
+                                        VALUES(%s,%s,%s,%s,%s)",[research_id,data_reference['title'],data_reference['link'],data_reference['resume'],data_reference['keyword']])
                                 conn.commit()
                         except Exception as e: 
                                 pass
@@ -104,7 +107,7 @@ class GetOpenAPI(threading.Thread):
                 real_question = []
                 conn = dbcon()
                 cur = conn.cursor()
-                conn.row_factory = sql.Row
+                # conn.row_factory = sql.Row
                 research_id = self.id
                 cur.execute("select paragraph_json from paragraph_tb where research_id="+research_id+" AND category='introduction'")
                 data_introduction = cur.fetchone()
@@ -136,7 +139,7 @@ class GetOpenAPI(threading.Thread):
         def get_ai(self):
                 conn = dbcon()
                 cur = conn.cursor()
-                conn.row_factory = sql.Row
+                # conn.row_factory = sql.Row
                 cur.execute("select * from research_slr where id="+self.id)
                 data = cur.fetchone()
                 research_id = self.id
@@ -152,7 +155,7 @@ class GetOpenAPI(threading.Thread):
                 # print(introduction_result)
 
                 cur.execute("INSERT INTO paragraph_tb(research_id, category,paragraph_json,status) \
-                    VALUES(?,?,?,?)",[research_id,"introduction",introduction_result,"finished"])
+                    VALUES(%s,%s,%s,%s)",[research_id,"introduction",introduction_result,"finished"])
                 conn.commit()
 
                 literature_result = {}
@@ -162,7 +165,7 @@ class GetOpenAPI(threading.Thread):
                 # print(literature_result)
                 
                 cur.execute("INSERT INTO paragraph_tb(research_id, category,paragraph_json,status) \
-                    VALUES(?,?,?,?)",[research_id,"literature",literature_result,"finished"])
+                    VALUES(%s,%s,%s,%s)",[research_id,"literature",literature_result,"finished"])
                 conn.commit()
                 methodology_result = {}
                 for _ in research_methodology.split("\n"):
@@ -171,19 +174,19 @@ class GetOpenAPI(threading.Thread):
                 # print(literature_result)
                 
                 cur.execute("INSERT INTO paragraph_tb(research_id, category,paragraph_json,status) \
-                    VALUES(?,?,?,?)",[research_id,"methodology",methodology_result,"finished"])
+                    VALUES(%s,%s,%s,%s)",[research_id,"methodology",methodology_result,"finished"])
                 conn.commit()
 
         def get_bibtex(self):
                 conn = dbcon()
                 cur = conn.cursor()
-                conn.row_factory = sql.Row
+                # conn.row_factory = sql.Row
                 cur.execute("select * from references_tb where research_id="+self.id)
                 for _ in cur.fetchall():
                         id = _[0]
                         title = _[3] 
                         doi, bibtex, year = self.doi_file(title)
-                        cur.execute('UPDATE references_tb SET doi=?, bibtex=?, year=?,  status=? WHERE id=?',[doi, bibtex, year, 'finished',id])
+                        cur.execute('UPDATE references_tb SET doi=%s, bibtex=%s, year=%s,  status=%s WHERE id=%s',[doi, bibtex, year, 'finished',id])
                         conn.commit()
 
         def run(self):
@@ -249,6 +252,7 @@ class GetLibrary(threading.Thread):
                                         if(th > 3):
                                                 break
                                         else:
+                                                th = th+1
                                                 pass
                                         
                         for per_this_element in this_element:
@@ -298,7 +302,7 @@ class GetLibrary(threading.Thread):
                 driver = webdriver.Chrome(options=chrome_options)
                 conn = dbcon()
                 cur = conn.cursor()
-                conn.row_factory = sql.Row
+                # conn.row_factory = sql.Row
                 cur.execute("select * from research_slr where id="+self.id)
                 data = cur.fetchone()
                 research_id = self.id
@@ -306,6 +310,90 @@ class GetLibrary(threading.Thread):
                 keyword_search = research_keyword
                 self.ieee(keyword_search, driver)
                 print("finished")
+                # print(research_keyword)
+
+
+
+class GetLibraryTest(threading.Thread):
+        def __init__(self, input_keyword):
+                self.input_keyword = input_keyword
+                super(GetLibraryTest, self).__init__() 
+       
+        def run(self):
+                options = uc.ChromeOptions() 
+                options.headless = True 
+                driver = uc.Chrome(service=Service(ChromeDriverManager().install()), use_subprocess=True, options=options) 
+                # chrome_options = Options()
+                # chrome_options.add_argument("--headless")
+                # chrome_options.add_argument('--no-sandbox')
+                # chrome_options.add_argument('--disable-dev-shm-usage')
+                # chrome_options.add_experimental_option("detach", True)
+                # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+                keyword_search = self.input_keyword
+
+                #ieee
+                temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
+                ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
+                ieee_search = ieee_search.replace(' ','%20')
+                url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")&highlight=true&returnType=SEARCH&matchPubs=true&rowsPerPage=100&refinements=ContentType:Conferences&refinements=ContentType:Journals&returnFacets=ALL"
+                driver.get(url_conference)
+                
+                # total = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div/div[3]/div/xpl-root/div/xpl-search-results/main/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]")))
+                # total_document = total.text.split("of ")[1].split(" ")[0].replace(",","")
+
+                # print(url_conference)
+                # print(driver.page_source)
+
+                # with open('text3.html', 'w') as f:
+                #         f.write(driver.page_source)
+
+                # ### cloudfare bypass ####
+                # print("reset driver")
+                # handle = driver.current_window_handle
+                # driver.service.stop()
+                # time.sleep(6)
+                # # driver = uc.Chrome(options=options) 
+                # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+                # driver.switch_to.window(handle)
+                # print(driver.page_source)
+
+
+
+                # driver.maximize_window()  
+                # time.sleep(10)
+                # print(driver.page_source)
+                # driver.save_screenshot("ieee2.png") 
+                # th = 0
+                # while True:
+                #         try:
+                #                 total = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div/div[3]/div/xpl-root/div/xpl-search-results/main/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]")))
+                #                 break
+                #         except:
+                #                 if(th > 3):
+                #                         break
+                #                 else:
+                #                         print("error 2")
+                #                         th = th+1
+                #                         pass
+                # try:
+                #         total_document = total.text.split("of ")[1].split(" ")[0].replace(",","")
+                #         # total_page = math.ceil(int(total_document)/100)
+                # except:
+                #         total_document = 0
+                #         # total_page = 0
+
+                # print(total_document)
+
+                # conn = dbcon()
+                # cur = conn.cursor()
+                # conn.row_factory = sql.Row
+                # cur.execute("select * from research_slr where id="+self.id)
+                # data = cur.fetchone()
+                # research_id = self.id
+                # research_keyword = data[6]
+                # keyword_search = research_keyword
+                # self.ieee(keyword_search, driver)
+                # print("finished")
                 # print(research_keyword)
 
 
@@ -360,41 +448,6 @@ def dbcon():
         curr.execute('''CREATE TABLE IF NOT EXISTS slr_tb\
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text);''')
 
-
-        # conn.execute('''CREATE TABLE IF NOT EXISTS research_slr\
-        #         (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20));''')
-
-        # conn.execute('''CREATE TABLE IF NOT EXISTS config\
-        #         (id INTEGER PRIMARY KEY AUTO_INCREMENT, title text, category text, value text);''')
-
-        # conn.execute('''CREATE TABLE IF NOT EXISTS paragraph_tb\
-        #         (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, category text, paragraph_json text, status text);''')
-
-        # conn.execute('''CREATE TABLE IF NOT EXISTS references_tb\
-        #         (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, paragraph_id text, title text, link text, resume text, keyword text, doi text, bibtex text, year text, status text);''')
-
-        # conn.execute('''CREATE TABLE IF NOT EXISTS slr_tb\
-        #         (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text);''')
-
-
-        # sql = "INSERT INTO customers (name, address) VALUES (%s, %s)"
-        # val = [
-        # ('Peter', 'Lowstreet 4'),
-        # ('Amy', 'Apple st 652'),
-        # ('Hannah', 'Mountain 21'),
-        # ('Michael', 'Valley 345'),
-        # ('Sandy', 'Ocean blvd 2'),
-        # ('Betty', 'Green Grass 1'),
-        # ('Richard', 'Sky st 331'),
-        # ('Susan', 'One way 98'),
-        # ('Vicky', 'Yellow Garden 2'),
-        # ('Ben', 'Park Lane 38'),
-        # ('William', 'Central st 954'),
-        # ('Chuck', 'Main Road 989'),
-        # ('Viola', 'Sideway 1633')
-        # ]
-
-        # curr.executemany(sql, val)
         config_data = [
                 ('FACEBOOK_SESSION', 'facebook','','FACEBOOK_SESSION', 'facebook'),
                 ('OPENGPT_SESSION_1', 'openai','','OPENGPT_SESSION_1', 'openai'),

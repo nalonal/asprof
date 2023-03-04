@@ -135,5 +135,55 @@ $(document).ready(function(){
 	});
 
 
+	$("#test_research_keyword").click(function(){
+		var input_keyword = $("#input_research_keyword"). val();
+		$("#waitingtext").text("Please Wait Until the Proccess Finish");
+
+		$.ajax({
+			type: "POST",
+			url: root+'/api/start_count_total',
+			data: JSON.stringify({'input_keyword':input_keyword}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				var ieee = output['data']['ieee']
+				var sciencedirect = output['data']['sciencedirect']
+				var acm = output['data']['acm']
+				$('#waitingtext').html('Result IEEE:'+ieee+', ScienceDirect:'+sciencedirect+', ACM Library:'+acm);
+				// window.open(root+'/literature_review',"_self")
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+	$("#save_research_keyword").click(function(){
+		var id = $("#input_research_id"). val();
+		var research_keyword= $("#input_research_keyword"). val();
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/rk/update',
+			data: JSON.stringify({'id':id,'research_keyword':research_keyword}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+
 });
 </script>

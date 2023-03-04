@@ -42,12 +42,14 @@
               <h2 class="text-center" style="color: black;">Research Keyword</h2>
                   <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
                   <div class="form-row mb-3">
-                    <input type="text" class="form-control" id="input_research_title" placeholder="Research Title" value="{{ output['data']['research_keyword'] }}">
+                    <input type="text" class="form-control" id="input_research_keyword" placeholder="Research Title" value="{{ output['data'][6] }}">
                     <p>Insert Research Keyword to Crawling All Research Data From Digital Library</p>
                   </div>
                  <div class="form-group">
                   <button id="save_research_keyword" class="btn btn-success">Save Research Keyword</button>
                   <button id="test_research_keyword" class="btn btn-info">Test Research Keyword</button>
+
+                  <div id="waitingtext"></div>
               </div>
 
           </main>
