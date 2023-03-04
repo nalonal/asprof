@@ -59,32 +59,32 @@ $(document).ready(function(){
   });
 
 
-  $("#save_research_map").click(function(){
-		layoutAll()
-		var id = $("#input_research_id"). val();
-		var research_introduction = $("#input_research_introduction"). val();
-		var research_literature = $("#input_research_literature"). val();
-		var research_methodology = $("#input_research_methodology"). val();
-		var research_keyword = $("#input_research_keyword"). val();
+//   $("#save_research_map").click(function(){
+// 		layoutAll()
+// 		var id = $("#input_research_id"). val();
+// 		var research_introduction = $("#input_research_introduction"). val();
+// 		var research_literature = $("#input_research_literature"). val();
+// 		var research_methodology = $("#input_research_methodology"). val();
+// 		var research_keyword = $("#input_research_keyword"). val();
 
-		$.ajax({
-		type: "POST",
-		url: root+'/literature_review/update_map',
-		data: JSON.stringify({'id':id,'research_introduction':research_introduction, 'research_literature':research_literature,'research_methodology':research_methodology, 'research_keyword':research_keyword}),
-		dataType: 'json',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		success: function(output)
-		{
-			location.reload();
-		},
-		error: function (data)
-		{
-		}
-		});
+// 		$.ajax({
+// 		type: "POST",
+// 		url: root+'/literature_review/update_map',
+// 		data: JSON.stringify({'id':id,'research_introduction':research_introduction, 'research_literature':research_literature,'research_methodology':research_methodology, 'research_keyword':research_keyword}),
+// 		dataType: 'json',
+// 		headers: {
+// 			'Content-Type': 'application/json'
+// 		},
+// 		success: function(output)
+// 		{
+// 			location.reload();
+// 		},
+// 		error: function (data)
+// 		{
+// 		}
+// 		});
 
-		});
+// 		});
 
 	$("#save_research_remove").click(function(){
 		var id = $("#input_research_id"). val();

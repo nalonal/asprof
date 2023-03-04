@@ -57,11 +57,30 @@ def literature_review_update_map():
 	cur = conn.cursor()
 	data = request.get_json()
 	id = data['id']
-	research_introduction = data['research_introduction']
-	research_literature = data['research_literature']
-	research_methodology = data['research_methodology']
-	research_keyword = data['research_keyword']
-	cur.execute('UPDATE research_slr SET research_introduction=%s,  research_literature=%s, research_methodology=%s, research_keyword=%s WHERE id=%s',[research_introduction,research_literature,research_methodology,research_keyword,id])
+	input_research_map = data['research_map']
+	research_map = json.loads(input_research_map)
+	data_results = research_map['nodeDataArray'] 
+	introduction = []
+	literature = []
+	methodology = []
+
+	for _ in data_results:
+		try:
+			parent = _['parent'] 
+		except:
+			parent = 0
+			pass
+		if(parent == 1):
+			introduction.append(_['text'])
+		if(parent == 2):
+			literature.append(_['text'])
+		if(parent == 3):
+			methodology.append(_['text'])
+	research_introduction = "\n".join(introduction)
+	research_literature = "\n".join(literature)
+	research_methodology = "\n".join(methodology)
+
+	cur.execute('UPDATE research_slr SET research_introduction=%s,  research_literature=%s, research_methodology=%s, research_map=%s WHERE id=%s',[research_introduction,research_literature,research_methodology,input_research_map,id])
 	conn.commit()
 	return Response(json.dumps(data),status=200, mimetype='application/json')
 
@@ -213,7 +232,7 @@ def literature_review_add():
 	research_author = data['research_author']
 	status = "created"
 	date_now = datetime.now().strftime("%Y-%m-%d")
-	research_map = '{ "class": "go.TreeModel","nodeDataArray": [{"key":0, "text":"Implementation Big Data in Cyber Security : Systematic Literature Review", "loc":"-202.63350000000025 94.32549999999998"},{"key":1, "parent":0, "text":"Introduction", "brush":"skyblue", "dir":"right", "loc":"241.48515234374975 78.82549999999998"},{"key":3, "parent":0, "text":"Literature Study", "brush":"palevioletred", "dir":"right", "loc":"241.48515234374975 104.82549999999998"},{"key":4, "parent":0, "text":"Research Methods", "brush":"coral", "dir":"right", "loc":"241.48515234374975 130.82549999999998"}]}'
+	research_map = '{ "class": "go.TreeModel","nodeDataArray": [{"key":0, "text":"'+research_title+'", "loc":"-202.63350000000025 94.32549999999998"},{"key":1, "parent":0, "text":"Introduction", "brush":"skyblue", "dir":"right", "loc":"241.48515234374975 78.82549999999998"},{"key":3, "parent":0, "text":"Literature Study", "brush":"palevioletred", "dir":"right", "loc":"241.48515234374975 104.82549999999998"},{"key":4, "parent":0, "text":"Research Methods", "brush":"coral", "dir":"right", "loc":"241.48515234374975 130.82549999999998"}]}'
 	cur = conn.cursor()
 	cur.execute("INSERT INTO research_slr(research_title, research_author,status,created_date, research_map) \
                     SELECT %s,%s,%s,%s,%s WHERE NOT EXISTS(SELECT 1 FROM research_slr WHERE research_title = %s AND research_author = %s)",(research_title,research_author,status,date_now,research_map,research_title,research_author))
