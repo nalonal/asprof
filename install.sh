@@ -5,6 +5,8 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docke
 sudo apt update
 git config --global user.name "nalonal"
 git config --global user.email "rionaldyrizqy@gmail.com"
+wget -nc https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install -f ./google-chrome-stable_current_amd64.deb 
 sudo apt install python3-pip -y
 sudo apt install docker-ce -y
 mkdir -p ~/.docker/cli-plugins/
