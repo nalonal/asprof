@@ -60,7 +60,7 @@ class GetOpenAPI(threading.Thread):
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
         def request_ai(self, question):
-                openai.api_key = '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'
+                openai.api_key = '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'
                 response = openai.Completion.create(
                         model="text-davinci-003",
                         prompt=question,
@@ -194,208 +194,241 @@ class GetOpenAPI(threading.Thread):
                 self.get_references()
                 self.get_bibtex()
 
+
+
 class GetLibrary(threading.Thread):
         def __init__(self, id):
                 self.id = id
+                self.conn = dbcon()
+                self.cur = self.conn.cursor()
+                self.options = uc.ChromeOptions() 
+                self.options.add_argument('--headless')
+                self.driver = uc.Chrome(service=Service(ChromeDriverManager().install()), use_subprocess=True, options=self.options) 
                 super(GetLibrary, self).__init__() 
 
-        def encode(self,string):
-                this_string = string
-                decode_string = ['+']
-                encode_string = [' ']
-                for e_string, d_string in zip(encode_string, decode_string):
-                        this_string = this_string.replace(e_string, d_string)
-                for e_string, d_string in zip(encode_string[::-1], decode_string[::-1]):
-                        this_string = this_string.replace(e_string, d_string)
-
-        def ieee(self,keyword_search,driver):
-                conn = dbcon()
-                cur = conn.cursor()
-                conn.row_factory = sql.Row
+        def run(self):
+                self.cur.execute("select * from research_slr where id="+self.id)
+                data = self.cur.fetchone()
                 research_id = self.id
+                research_keyword = data[6]
+                keyword_search = research_keyword
+                self.ieee(keyword_search)
+                self.sciencedirect(keyword_search)
+                self.acm(keyword_search)
+                self.ieee_crawling()
+                self.sciencedirect_crawling()
+                self.acm_crawling()
 
-                temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
-                ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
-                ieee_search.replace(" ","%20")
-                url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")&highlight=true&returnType=SEARCH&matchPubs=true&rowsPerPage=100&refinements=ContentType:Conferences&refinements=ContentType:Journals&returnFacets=ALL"
-                driver.get(url_conference) 
-
-                th = 0
-                while True:
+        def ieee_crawling(self):
+                research_id = self.id
+                self.cur.execute("select * from slr_tb where research_id="+research_id+" AND source='ieee' AND status IS NULL")
+                data_total_process_references = self.cur.fetchall()
+                for _ in data_total_process_references:
+                        this_id = _[0]
+                        self.driver.get(_[3]) 
+                        time.sleep(10)
                         try:
-                                total = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div/div[3]/div/xpl-root/div/xpl-search-results/main/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]")))
-                                break
+                                abstract = self.driver.find_element(By.CLASS_NAME,"abstract-text").text.replace("Abstract:\n","")
+                                doi = self.driver.find_element(By.CLASS_NAME,"stats-document-abstract-doi").text.replace("DOI: ","")
                         except:
-                                if(th > 3):
-                                        break
-                                else:
-                                        pass
+                                abstract = ""
+                                doi = ""
+                        strencode = abstract.encode("ascii", "ignore")
+                        abstract = strencode.decode()
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s WHERE id=%s',[abstract.encode(encoding='UTF-8',errors='strict'), doi, "finished", this_id])
+                        self.conn.commit()
+
+        def sciencedirect_crawling(self):
+                research_id = self.id
+                self.cur.execute("select * from slr_tb where research_id="+research_id+" AND source='Sciencedirect' AND status IS NULL")
+                data_total_process_references = self.cur.fetchall()
+                for _ in data_total_process_references:
+                        this_id = _[0]
+                        self.driver.get(_[3])
+                        time.sleep(10)
+                        try:
+                                abstract = self.driver.find_element(By.CLASS_NAME,"abstract").text.replace("Abstract\n","")
+                                doi = self.driver.find_element(By.CLASS_NAME,"doi").text.replace("https://doi.org/","")
+                        except:
+                                abstract = ""
+                                doi = ""
+                        strencode = abstract.encode("ascii", "ignore")
+                        abstract = strencode.decode()
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s WHERE id=%s',[abstract, doi, "finished", this_id])
+                        self.conn.commit()
+        
+        def acm_crawling(self):
+                research_id = self.id
+                self.cur.execute("select * from slr_tb where research_id="+research_id+" AND source='ACM Digital Library' AND status IS NULL")
+                data_total_process_references = self.cur.fetchall()
+                for _ in data_total_process_references:
+                        this_id = _[0]
+                        self.driver.get(_[3])
+                        time.sleep(10)
+                        try:
+                                abstract = self.driver.find_element(By.CLASS_NAME,"abstractInFull").text
+                                authors = dself.river.find_elements(By.CLASS_NAME,"loa__author-name")
+                                this_author = [per_authors.text for per_authors in authors]
+                                author = "; ".join(this_author)
+                        except:
+                                abstract = ""
+                                author = ""
+                        strencode = abstract.encode("ascii", "ignore")
+                        abstract = strencode.decode()
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s WHERE id=%s',[abstract.encode(encoding='UTF-8',errors='strict'), author, "finished", this_id])
+                        self.conn.commit()
+                
+                
+        def acm(self, keyword_search):
+                research_id = self.id
+                temp_acm_search = "(Title:("+keyword_search+"))"
+                temp_acm_search = temp_acm_search+" OR "+temp_acm_search.replace("Title","Abstract")+" OR "+temp_acm_search.replace("Title","Keyword")
+                acm_search = temp_acm_search.replace('(','%28').replace(":","%3A").replace('"',"%22").replace(" ","+").replace(')','%29')
+                url_acm = "https://dl.acm.org/action/doSearch?AllField="+acm_search+"&pageSize=100"
+                self.driver.get(url_acm) 
+                time.sleep(5)
                 try:
-                        total_document = total.text.split("of ")[1].split(" ")[0].replace(",","")
+                        total_document = self.driver.find_element(By.CLASS_NAME,"hitsLength").text.replace(",","")
                         total_page = math.ceil(int(total_document)/100)
                 except:
                         total_document = 0
                         total_page = 0
 
-                document_search = []
-                no=1
                 for per_page in range(total_page):
-                        this_page = per_page+1
-                        driver.get(url_conference+"&pageNumber="+str(this_page)) 
-                        th = 0                        
-                        while True:
-                                try:
-                                        this_element = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, "List-results-items")))
-                                        this_element = driver.find_elements(By.CLASS_NAME, "List-results-items")
-                                        break
-                                except:
-                                        if(th > 3):
-                                                break
-                                        else:
-                                                th = th+1
-                                                pass
-                                        
+                        self.driver.get(url_acm+"&startPage="+str(per_page)) 
+                        time.sleep(3)
+                        this_element =self.driver.find_elements(By.CLASS_NAME, "search__item")
                         for per_this_element in this_element:
                                 output_search = {}
+                                title = per_this_element.find_element(By.CLASS_NAME,"issue-item__title").text
+                                link = per_this_element.find_element(By.CLASS_NAME,"issue-item__title").find_element(By.TAG_NAME,"a").get_attribute('href')
                                 try:
-                                        title = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].text
-                                        link = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].find_element(By.TAG_NAME,"a").get_attribute('href')
-                                        try:
-                                                author = per_this_element.find_element(By.CLASS_NAME,"author").text.replace("\n"," ")
-                                        except:
-                                                author = "None"     
-                                        try:
-                                                event = per_this_element.find_element(By.CLASS_NAME,"description").find_element(By.TAG_NAME,"a").text
-                                        except:
-                                                event = "None"
-                                        try:
-                                                description = per_this_element.find_element(By.CLASS_NAME,"publisher-info-container").text
-                                                year = description.split(" | ")[0].replace("Year: ","")
-                                                year = re.sub('[^0-9]','', year)
-                                                publish_type = description.split(" | ")[1]
-                                                publish_name = description.split(" | ")[2].replace("Publisher: ","")
-                                        except:
-                                                description = "None" 
-                                                year = "None"
-                                                publish_type = "None"
-                                                publish_name = "None"
-                                        output_search['title'] = title
-                                        output_search['link'] = link
-                                        output_search['author'] = author 
-                                        output_search['event'] = event 
-                                        output_search['year'] = year 
-                                        output_search['publish_type'] = publish_type 
-                                        output_search['publish_name'] = publish_name 
-                                        output_search['source'] = "IEEE"
-                                        # print(output_search) 
-                                        cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(?,?,?,?,?,?,?,?,?)",[research_id,title,link,author,event,year,publish_type, publish_name, "IEEE"])
-                                        conn.commit()
+                                        author = per_this_element.find_element(By.CLASS_NAME,"truncate-list").text.replace(",",";")
                                 except:
-                                        pass
-                                no=no+1
+                                        author = "None"
+                                try:
+                                        event = per_this_element.find_element(By.CLASS_NAME,"issue-item__detail").find_elements(By.TAG_NAME,"span")[0].text
+                                except:
+                                        event = "None"
+                                try:
+                                        year = per_this_element.find_element(By.CLASS_NAME,"issue-item__detail").find_elements(By.TAG_NAME,"span")[1].text.split(",")[0].split(" ")[-1]
+                                        year = re.sub('[^0-9]','', year)
+                                except:
+                                        year = "None" 
+                                try:
+                                        publish_type = per_this_element.find_element(By.CLASS_NAME,"issue-heading").text
+                                except:
+                                        publish_type = "None"
+                                try:
+                                        doi = per_this_element.find_element(By.CLASS_NAME,"issue-item__detail").find_elements(By.TAG_NAME,"span")[-1].text.replace("https://doi.org/","")
+                                except:
+                                        doi = "None"
 
-       
-        def run(self):
-                chrome_options = Options()
-                chrome_options.add_argument("--headless")
-                chrome_options.add_experimental_option("detach", True)
-                driver = webdriver.Chrome(options=chrome_options)
-                conn = dbcon()
-                cur = conn.cursor()
-                # conn.row_factory = sql.Row
-                cur.execute("select * from research_slr where id="+self.id)
-                data = cur.fetchone()
+                                publish_name = event
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "ACM Digital Library"])
+                                self.conn.commit()
+
+
+        def sciencedirect(self, keyword_search):
                 research_id = self.id
-                research_keyword = data[6]
-                keyword_search = research_keyword
-                self.ieee(keyword_search, driver)
-                print("finished")
-                # print(research_keyword)
+                #sd
+                sciencedirect_search = keyword_search.replace("(","%28").replace(" ","%20").replace(")","%29")
+                url_sciencedirect = 'https://www.sciencedirect.com/search?tak='+sciencedirect_search+'&show=100&articleTypes=REV%2CFLA&lastSelectedFacet=articleTypes'
+                self.driver.get(url_sciencedirect)
+                time.sleep(5)
+        
+                try:
+                        total_document = self.driver.find_element(By.CLASS_NAME,"ResultsFound").text.split(" ")[0].replace(",","")
+                        total_page = math.ceil(int(total_document)/100)
+
+                except:
+                        total_document = 0
+                        total_page = 0
+  
+                for per_page in range(total_page):
+                        self.driver.get(url_sciencedirect+"&offset="+str(per_page)) 
+                        time.sleep(3)
+                        this_element = self.driver.find_elements(By.CLASS_NAME, "ResultItem")
+                        for per_this_element in this_element:
+                                output_search = {}
+                                title = per_this_element.find_element(By.CLASS_NAME,"result-list-title-link").text
+                                link = per_this_element.find_element(By.TAG_NAME,"a").get_attribute('href')
+                                try:
+                                        author = [name_author.text for name_author in per_this_element.find_elements(By.CLASS_NAME,"author")]
+                                        author = "; ".join(author)
+                                except:
+                                        author = "None"
+                                try:
+                                        event = per_this_element.find_elements(By.CLASS_NAME,"anchor-text")[1].text
+                                except:
+                                        event = "None"
+                                try:
+                                        year = per_this_element.find_element(By.CLASS_NAME,"srctitle-date-fields").text.split(" ")[-1]
+                                        year = re.sub('[^0-9]','', year)
+                                except:
+                                        year = "None"
+                                try:    
+                                        publish_type = per_this_element.find_element(By.CLASS_NAME,"article-type").text
+                                except:
+                                        publish_type = "None"
+                                
+                                publish_name = event
+
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "Sciencedirect"])
+                                self.conn.commit()
 
 
 
-class GetLibraryTest(threading.Thread):
-        def __init__(self, input_keyword):
-                self.input_keyword = input_keyword
-                super(GetLibraryTest, self).__init__() 
-       
-        def run(self):
-                options = uc.ChromeOptions() 
-                options.headless = True 
-                driver = uc.Chrome(service=Service(ChromeDriverManager().install()), use_subprocess=True, options=options) 
-                # chrome_options = Options()
-                # chrome_options.add_argument("--headless")
-                # chrome_options.add_argument('--no-sandbox')
-                # chrome_options.add_argument('--disable-dev-shm-usage')
-                # chrome_options.add_experimental_option("detach", True)
-                # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-                keyword_search = self.input_keyword
+        def ieee(self, keyword_search):
+                research_id = self.id
 
-                #ieee
                 temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
                 ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
                 ieee_search = ieee_search.replace(' ','%20')
                 url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")&highlight=true&returnType=SEARCH&matchPubs=true&rowsPerPage=100&refinements=ContentType:Conferences&refinements=ContentType:Journals&returnFacets=ALL"
-                driver.get(url_conference)
+                self.driver.get(url_conference)
+                time.sleep(5)
+                try:
+                        total_ieee = self.driver.find_element(By.XPATH, '//*[@id="xplMainContent"]/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]')
+                        total_document = total_ieee.text.split("of ")[1].split(" ")[0].replace(",","")
+                        total_page = math.ceil(int(total_document)/100)
+                except:
+                        total_document = 0
+                        total_page = 0
                 
-                # total = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div/div[3]/div/xpl-root/div/xpl-search-results/main/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]")))
-                # total_document = total.text.split("of ")[1].split(" ")[0].replace(",","")
-
-                # print(url_conference)
-                # print(driver.page_source)
-
-                # with open('text3.html', 'w') as f:
-                #         f.write(driver.page_source)
-
-                # ### cloudfare bypass ####
-                # print("reset driver")
-                # handle = driver.current_window_handle
-                # driver.service.stop()
-                # time.sleep(6)
-                # # driver = uc.Chrome(options=options) 
-                # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-                # driver.switch_to.window(handle)
-                # print(driver.page_source)
-
-
-
-                # driver.maximize_window()  
-                # time.sleep(10)
-                # print(driver.page_source)
-                # driver.save_screenshot("ieee2.png") 
-                # th = 0
-                # while True:
-                #         try:
-                #                 total = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div/div/div/div[3]/div/xpl-root/div/xpl-search-results/main/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]")))
-                #                 break
-                #         except:
-                #                 if(th > 3):
-                #                         break
-                #                 else:
-                #                         print("error 2")
-                #                         th = th+1
-                #                         pass
-                # try:
-                #         total_document = total.text.split("of ")[1].split(" ")[0].replace(",","")
-                #         # total_page = math.ceil(int(total_document)/100)
-                # except:
-                #         total_document = 0
-                #         # total_page = 0
-
-                # print(total_document)
-
-                # conn = dbcon()
-                # cur = conn.cursor()
-                # conn.row_factory = sql.Row
-                # cur.execute("select * from research_slr where id="+self.id)
-                # data = cur.fetchone()
-                # research_id = self.id
-                # research_keyword = data[6]
-                # keyword_search = research_keyword
-                # self.ieee(keyword_search, driver)
-                # print("finished")
-                # print(research_keyword)
-
+                document_search = []
+                no=1
+                for per_page in range(total_page):
+                        this_page = per_page+1
+                        self.driver.get(url_conference+"&pageNumber="+str(this_page)) 
+                        time.sleep(3)
+                        this_element =self.driver.find_elements(By.CLASS_NAME, "List-results-items")
+                        for per_this_element in this_element:
+                                output_search = {}
+                                title = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].text
+                                link = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].find_element(By.TAG_NAME,"a").get_attribute('href')
+                                try:
+                                        author = per_this_element.find_element(By.CLASS_NAME,"author").text.replace("\n"," ")
+                                except:
+                                        author = "None"     
+                                try:
+                                        event = per_this_element.find_element(By.CLASS_NAME,"description").find_element(By.TAG_NAME,"a").text
+                                except:
+                                        event = "None"
+                                try:
+                                        description = per_this_element.find_element(By.CLASS_NAME,"publisher-info-container").text
+                                        year = description.split(" | ")[0].replace("Year: ","")
+                                        year = re.sub('[^0-9]','', year)
+                                        publish_type = description.split(" | ")[1]
+                                        publish_name = description.split(" | ")[2].replace("Publisher: ","")
+                                except:
+                                        description = "None" 
+                                        year = "None"
+                                        publish_type = "None"
+                                        publish_name = "None"
+                               
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "IEEE"])
+                                self.conn.commit()
 
 def copyright():
 	print(Figlet(font='slant').renderText(setup.TEXT_WELCOME))
@@ -460,10 +493,6 @@ def dbcon():
 	
         conn.commit()
         return conn
-
-
-
-#Create table research_slr_
 
 
 # cors = CORS(app, resources={r"/*": {"origins": "*"}})

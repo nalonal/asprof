@@ -187,11 +187,45 @@ def literature_review_as(id):
 	data_total_process_references = cur.fetchall()
 	total_process_references = len(data_total_process_references)
 
+	cur.execute("select * from slr_tb where research_id="+id+" AND source='ieee'")
+	data_total_references = cur.fetchall()
+	total_slr_iee = len(data_total_references)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND source='ieee' AND status IS NOT NULL")
+	data_total_process_references = cur.fetchall()
+	total_process_slr_iee = len(data_total_process_references)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND source='Sciencedirect'")
+	data_total_references = cur.fetchall()
+	total_slr_sd = len(data_total_references)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND source='Sciencedirect' AND status IS NOT NULL")
+	data_total_process_references = cur.fetchall()
+	total_process_slr_sd = len(data_total_process_references)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND source='ACM Digital Library'")
+	data_total_references = cur.fetchall()
+	total_slr_acm = len(data_total_references)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND source='ACM Digital Library' AND status IS NOT NULL")
+	data_total_process_references = cur.fetchall()
+	total_process_slr_acm = len(data_total_process_references)
+
+	
 	status['introduction'] = status_introduction
 	status['literature'] = status_literature
 	status['methodology'] = status_methodology
 	status['total_references'] = total_references
 	status['total_process_references'] = total_process_references
+
+	status['total_slr_iee'] = total_slr_iee
+	status['total_process_slr_iee'] = total_process_slr_iee
+
+	status['total_slr_sd'] = total_slr_sd
+	status['total_process_slr_sd'] = total_process_slr_sd
+
+	status['total_slr_acm'] = total_slr_acm
+	status['total_process_slr_acm'] = total_process_slr_acm
 
 	output['data'] = data
 	output['status'] = status
@@ -325,8 +359,8 @@ def automate_openai():
 	id = data['id']
 	getOpenAPI = GetOpenAPI(id)
 	getOpenAPI.start()
-	# getLibrary = GetLibrary(id)
-	# getLibrary.start()
+	getLibrary = GetLibrary(id)
+	getLibrary.start()
 	# return {'status': 'ok'}, 200
 	return Response(json.dumps({'success':True}),status=200, mimetype='application/json')
 
@@ -352,7 +386,7 @@ def start_count_total():
 	time.sleep(5)
 	total_ieee = driver.find_element(By.XPATH, '//*[@id="xplMainContent"]/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]')
 	total_document_ieee = total_ieee.text.split("of ")[1].split(" ")[0].replace(",","")
-	print(total_document_ieee)
+	# print(total_document_ieee)
 
 	#sd
 	sciencedirect_search = keyword_search.replace("(","%28").replace(" ","%20").replace(")","%29")
@@ -360,7 +394,7 @@ def start_count_total():
 	driver.get(url_sciencedirect)
 	time.sleep(5)
 	total_document_sd = driver.find_element(By.CLASS_NAME,"ResultsFound").text.split(" ")[0].replace(",","")
-	print(total_document_sd)
+	# print(total_document_sd)
 
 	#acm
 	temp_acm_search = "(Title:("+keyword_search+"))"
@@ -370,7 +404,7 @@ def start_count_total():
 	driver.get(url_acm) 
 	time.sleep(5)
 	total_document_acm = driver.find_element(By.CLASS_NAME,"hitsLength").text.replace(",","")
-	print(total_document_acm)
+	# print(total_document_acm)
 
 	output_search = {
 		'ieee' : total_document_ieee,
