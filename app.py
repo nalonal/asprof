@@ -31,8 +31,25 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import urllib.parse,requests,time
 import re
+import requests, random
 
 import undetected_chromedriver as uc 
+
+from fake_useragent import UserAgent
+from stem import Signal
+from stem.control import Controller
+
+
+def tor_requests(url):
+        proxies = {
+                'http': 'socks5://127.0.0.1:9050',
+                'https': 'socks5://127.0.0.1:9050'
+        }
+        headers = { 'User-Agent': UserAgent().random }
+        with Controller.from_port(port = 9051) as c:
+                c.authenticate(password='asprof')
+                c.signal(Signal.NEWNYM)
+                return requests.get(url, proxies=proxies, headers=headers)
 
 class GetOpenAPI(threading.Thread):
         def __init__(self, id):
@@ -78,14 +95,16 @@ class GetOpenAPI(threading.Thread):
                 # conn.row_factory = sql.Row
                 this_keyword = urllib.parse.quote(input_keyword).replace("%20", "+")
                 url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword+"+%28site%3Adl.acm.org+OR+site%3Aieeexplore.ieee.org+OR+site%3Asciencedirect.com+OR+site%3Alink.springer.com%29&hl=id&as_sdt=0%2C5&as_ylo=2018&as_yhi=2022"
-                response=requests.get(url,headers=self.headers) 
+                # response=requests.get(url,headers=self.headers) 
+                response=tor_requests.get(url)
                 soup=BeautifulSoup(response.content,'lxml')
                 if len(soup.select('[data-lid]')) == 0:
                         change_sentence = 'short this sentence "'+input_keyword+'"'
                         response_word = self.request_ai(change_sentence)
                         this_keyword = urllib.parse.quote(response_word).replace("%20", "+") 
                         url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword+"+%28site%3Adl.acm.org+OR+site%3Aieeexplore.ieee.org+OR+site%3Asciencedirect.com+OR+site%3Alink.springer.com%29&hl=id&as_sdt=0%2C5&as_ylo=2018&as_yhi=2022"
-                        response=requests.get(url,headers=self.headers) 
+                        # response=requests.get(url,headers=self.headers)
+                        response=tor_requests.get(url) 
                         soup=BeautifulSoup(response.content,'lxml')
 
                 for item in soup.select('[data-lid]'): 
@@ -286,7 +305,7 @@ class GetLibrary(threading.Thread):
                 acm_search = temp_acm_search.replace('(','%28').replace(":","%3A").replace('"',"%22").replace(" ","+").replace(')','%29')
                 url_acm = "https://dl.acm.org/action/doSearch?AllField="+acm_search+"&pageSize=100"
                 self.driver.get(url_acm) 
-                time.sleep(5)
+                time.sleep(10)
                 try:
                         total_document = self.driver.find_element(By.CLASS_NAME,"hitsLength").text.replace(",","")
                         total_page = math.ceil(int(total_document)/100)
@@ -296,7 +315,7 @@ class GetLibrary(threading.Thread):
 
                 for per_page in range(total_page):
                         self.driver.get(url_acm+"&startPage="+str(per_page)) 
-                        time.sleep(3)
+                        time.sleep(10)
                         this_element =self.driver.find_elements(By.CLASS_NAME, "search__item")
                         for per_this_element in this_element:
                                 output_search = {}
@@ -335,7 +354,7 @@ class GetLibrary(threading.Thread):
                 sciencedirect_search = keyword_search.replace("(","%28").replace(" ","%20").replace(")","%29")
                 url_sciencedirect = 'https://www.sciencedirect.com/search?tak='+sciencedirect_search+'&show=100&articleTypes=REV%2CFLA&lastSelectedFacet=articleTypes'
                 self.driver.get(url_sciencedirect)
-                time.sleep(5)
+                time.sleep(10)
         
                 try:
                         total_document = self.driver.find_element(By.CLASS_NAME,"ResultsFound").text.split(" ")[0].replace(",","")
@@ -381,13 +400,12 @@ class GetLibrary(threading.Thread):
 
         def ieee(self, keyword_search):
                 research_id = self.id
-
                 temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
                 ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
                 ieee_search = ieee_search.replace(' ','%20')
                 url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")&highlight=true&returnType=SEARCH&matchPubs=true&rowsPerPage=100&refinements=ContentType:Conferences&refinements=ContentType:Journals&returnFacets=ALL"
                 self.driver.get(url_conference)
-                time.sleep(5)
+                time.sleep(10)
                 try:
                         total_ieee = self.driver.find_element(By.XPATH, '//*[@id="xplMainContent"]/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]')
                         total_document = total_ieee.text.split("of ")[1].split(" ")[0].replace(",","")
@@ -395,13 +413,12 @@ class GetLibrary(threading.Thread):
                 except:
                         total_document = 0
                         total_page = 0
-                
                 document_search = []
                 no=1
                 for per_page in range(total_page):
                         this_page = per_page+1
                         self.driver.get(url_conference+"&pageNumber="+str(this_page)) 
-                        time.sleep(3)
+                        time.sleep(10)
                         this_element =self.driver.find_elements(By.CLASS_NAME, "List-results-items")
                         for per_this_element in this_element:
                                 output_search = {}
@@ -429,6 +446,7 @@ class GetLibrary(threading.Thread):
                                
                                 self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "IEEE"])
                                 self.conn.commit()
+
 
 def copyright():
 	print(Figlet(font='slant').renderText(setup.TEXT_WELCOME))

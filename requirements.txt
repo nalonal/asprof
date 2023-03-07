@@ -12,3 +12,5 @@ selenium
 webdriver-manager
 undetected-chromedriver
 lxml
+stem
+fake_useragent

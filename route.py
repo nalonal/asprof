@@ -412,4 +412,14 @@ def start_count_total():
 		'acm' : total_document_acm
 	}
 	return Response(json.dumps({'success':True, 'data':output_search}),status=200, mimetype='application/json')
+
+
+##TESTING PAGE
+# @app.route('/testing')
+# def testing():
+# 	keyword = "Cryptograhpy"
+# 	google(keyword)
+
+
+
 app.run(host="0.0.0.0", debug = True) if __name__ == '__main__' else "Error"
