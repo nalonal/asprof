@@ -77,7 +77,7 @@ class GetOpenAPI(threading.Thread):
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
         def request_ai(self, question):
-                openai.api_key = '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'
+                openai.api_key = ''
                 response = openai.Completion.create(
                         model="text-davinci-003",
                         prompt=question,
@@ -96,7 +96,13 @@ class GetOpenAPI(threading.Thread):
                 this_keyword = urllib.parse.quote(input_keyword).replace("%20", "+")
                 url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword+"+%28site%3Adl.acm.org+OR+site%3Aieeexplore.ieee.org+OR+site%3Asciencedirect.com+OR+site%3Alink.springer.com%29&hl=id&as_sdt=0%2C5&as_ylo=2018&as_yhi=2022"
                 # response=requests.get(url,headers=self.headers) 
-                response=tor_requests.get(url)
+                while True:
+                        try:
+                                response=tor_requests(url)
+                                break
+                        except:
+                                pass
+                time.sleep(1)
                 soup=BeautifulSoup(response.content,'lxml')
                 if len(soup.select('[data-lid]')) == 0:
                         change_sentence = 'short this sentence "'+input_keyword+'"'
@@ -104,7 +110,13 @@ class GetOpenAPI(threading.Thread):
                         this_keyword = urllib.parse.quote(response_word).replace("%20", "+") 
                         url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword+"+%28site%3Adl.acm.org+OR+site%3Aieeexplore.ieee.org+OR+site%3Asciencedirect.com+OR+site%3Alink.springer.com%29&hl=id&as_sdt=0%2C5&as_ylo=2018&as_yhi=2022"
                         # response=requests.get(url,headers=self.headers)
-                        response=tor_requests.get(url) 
+                        while True:
+                                try:
+                                        response=tor_requests(url) 
+                                        break
+                                except:
+                                        pass
+                        time.sleep(1)
                         soup=BeautifulSoup(response.content,'lxml')
 
                 for item in soup.select('[data-lid]'): 
@@ -254,7 +266,7 @@ class GetLibrary(threading.Thread):
                                 doi = ""
                         strencode = abstract.encode("ascii", "ignore")
                         abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s WHERE id=%s',[abstract.encode(encoding='UTF-8',errors='strict'), doi, "finished", this_id])
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s WHERE id=%s',[abstract, doi, "finished", this_id])
                         self.conn.commit()
 
         def sciencedirect_crawling(self):
@@ -294,7 +306,7 @@ class GetLibrary(threading.Thread):
                                 author = ""
                         strencode = abstract.encode("ascii", "ignore")
                         abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s WHERE id=%s',[abstract.encode(encoding='UTF-8',errors='strict'), author, "finished", this_id])
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s WHERE id=%s',[abstract, author, "finished", this_id])
                         self.conn.commit()
                 
                 
