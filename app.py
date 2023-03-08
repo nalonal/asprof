@@ -39,7 +39,6 @@ from fake_useragent import UserAgent
 from stem import Signal
 from stem.control import Controller
 
-
 def tor_requests(url):
         proxies = {
                 'http': 'socks5://127.0.0.1:9050',
@@ -50,11 +49,11 @@ def tor_requests(url):
                 c.authenticate(password='asprof')
                 c.signal(Signal.NEWNYM)
                 return requests.get(url, proxies=proxies, headers=headers)
-
+from
 class GetOpenAPI(threading.Thread):
         def __init__(self, id):
                 self.id = id
-                super(GetOpenAPI, self).__init__()
+                super(GetOpenfrom8ortGetOpenfrom8ortfGetOpenfrom8ortGetOpenfrom8ortfff).__init__()
                 self.headers = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'} 
                 self.cr = Crossref()
 
@@ -232,10 +231,41 @@ class GetLibrary(threading.Thread):
                 self.id = id
                 self.conn = dbcon()
                 self.cur = self.conn.cursor()
+                self.cr = Crossref()
+                
                 self.options = uc.ChromeOptions() 
                 self.options.add_argument('--headless')
                 self.driver = uc.Chrome(service=Service(ChromeDriverManager().install()), use_subprocess=True, options=self.options) 
                 super(GetLibrary, self).__init__() 
+
+        def doi_file(self, title):
+                result = self.cr.works(query = title)
+                # result = self.cr.works(query = title)
+                doi = result['message']['items'][0]['DOI']
+                year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
+                BASE_URL = 'http://dx.doi.org/'
+                url = BASE_URL + doi
+                req = urllib.request.Request(url)
+                req.add_header('Accept', 'application/x-bibtex')
+                try:
+                        with urllib.request.urlopen(req) as f:
+                                bibtex = f.read().decode()
+                        return doi, bibtex, year
+                except HTTPError as e:
+                        if e.code == 404:
+                                return 'DOI not found.', 'file unavailable', 'unknown year' 
+                        else:
+                                return 'Service unavailable.', 'file unavailable', 'unknown year'
+
+        def get_bibtex(self):
+                research_id = self.id
+                self.cur.execute("select * from slr_tb where research_id="+research_id)
+                for _ in self.cur.fetchall():
+                        id = _[0]
+                        title = _[3] 
+                        doi, bibtex, year = self.doi_file(title)
+                        self.cur.execute('UPDATE slr_tb SET bibtex=%s WHERE id=%s',[bibtex,id])
+                        self.conn.commit()
 
         def run(self):
                 self.cur.execute("select * from research_slr where id="+self.id)
@@ -249,6 +279,7 @@ class GetLibrary(threading.Thread):
                 self.ieee_crawling()
                 self.sciencedirect_crawling()
                 self.acm_crawling()
+                self.get_bibtex()
 
         def ieee_crawling(self):
                 research_id = self.id
@@ -298,7 +329,7 @@ class GetLibrary(threading.Thread):
                         time.sleep(10)
                         try:
                                 abstract = self.driver.find_element(By.CLASS_NAME,"abstractInFull").text
-                                authors = dself.river.find_elements(By.CLASS_NAME,"loa__author-name")
+                                authors = self.driver.find_elements(By.CLASS_NAME,"loa__author-name")
                                 this_author = [per_authors.text for per_authors in authors]
                                 author = "; ".join(this_author)
                         except:
@@ -506,10 +537,10 @@ def dbcon():
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, category text, paragraph_json text, status text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS references_tb\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, paragraph_id text, title text, link text, resume text, keyword text, doi text, bibtex text, year text, status text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, paragraph_id text, title text, link text, resume text, keyword text, doi text, bibtex text, year text, status text, relevant text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS slr_tb\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text, relevant text, bibtex text);''')
 
         config_data = [
                 ('FACEBOOK_SESSION', 'facebook','','FACEBOOK_SESSION', 'facebook'),

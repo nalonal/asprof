@@ -211,6 +211,15 @@ def literature_review_as(id):
 	data_total_process_references = cur.fetchall()
 	total_process_slr_acm = len(data_total_process_references)
 
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND bibtex IS NOT NULL")
+	data_total_references = cur.fetchall()
+	total_process_bibtex = len(data_total_references)
+
+	cur.execute("select * from slr_tb where research_id="+id)
+	data_total_process_references = cur.fetchall()
+	total_bibtex = len(data_total_process_references)
+
 	
 	status['introduction'] = status_introduction
 	status['literature'] = status_literature
@@ -227,6 +236,9 @@ def literature_review_as(id):
 	status['total_slr_acm'] = total_slr_acm
 	status['total_process_slr_acm'] = total_process_slr_acm
 
+	status['total_bibtex'] = total_bibtex
+	status['total_process_bibtex'] = total_process_bibtex
+
 	output['data'] = data
 	output['status'] = status
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_status', output = output)	
@@ -242,6 +254,10 @@ def literature_review_lr(id):
 	cur.execute("select * from research_slr where id="+id)
 	data = cur.fetchone()
 	output['data'] = data
+
+	cur.execute("select * from slr_tb where research_id="+id)
+	output['papers'] = cur.fetchall()
+
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature', output = output)	
 	
 

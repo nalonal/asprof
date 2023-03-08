@@ -40,27 +40,39 @@
               </ul>
           </nav>
           <main class="inbox">
-              <h2 class="text-center" style="color: black;">Literature Review</h2>
+              <!-- <h2 class="text-center" style="color: black;">Literature Review</h2> -->
+              <nav class="nav nav-tabs">
+                <a class="nav-link active" href="#">Uncategory Paper</a>
+                <a class="nav-link" href="#">Selected Paper Review</a>
+                <a class="nav-link" href="#">Not Relevant Paper</a>
+              </nav>
               <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
+
               <ul class="messages">
-                <li class="message">
-                    <a href="#">
+                {% for paper in output['papers'] %}
+                <li class="message" style="color:black">
+                   
                         <div class="actions" style="padding-left: 30px;">
                           <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
                         </div>
                         <div class="header">
-                            <span class="from">Lukasz Holeczek</span>
+                            <span class="from"><strong>{{ paper[2] }}</strong></span>
                             <span class="date">
                             <span class="fa fa-paper-clip"></span> Today, 3:47 PM</span>
                         </div>
                         <div class="title">
-                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                          {{ paper[6] }} | {{ paper[4] }}
                         </div>
                         <div class="description">
-                            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                            {{ paper[10] }}
                         </div>
-                    </a>
+                        <div class="title">{{ paper[7] }} | {{ paper[7] }} | {{ paper[5] }}</div>
+                        <div class="title">
+                          <a target="_blank" href="{{ paper[3] }}">Source Article</a> | <a target="_blank" href="https://sci-hub.se/{{ paper[9] }}">Scihub Link</a><br>
+                      </div>
+                    
                 </li>
+                {% endfor %}
               </ul>
           </main>
       </div>
