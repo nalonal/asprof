@@ -57,14 +57,14 @@ class GetOpenAPI(threading.Thread):
                 self.cr = Crossref()
 
         def doi_file(self, title):
-                result = self.cr.works(query = title)
-                doi = result['message']['items'][0]['DOI']
-                year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
-                BASE_URL = 'http://dx.doi.org/'
-                url = BASE_URL + doi
-                req = urllib.request.Request(url)
-                req.add_header('Accept', 'application/x-bibtex')
                 try:
+                        result = self.cr.works(query = title)
+                        doi = result['message']['items'][0]['DOI']
+                        year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
+                        BASE_URL = 'http://dx.doi.org/'
+                        url = BASE_URL + doi
+                        req = urllib.request.Request(url)
+                        req.add_header('Accept', 'application/x-bibtex')
                         with urllib.request.urlopen(req) as f:
                                 bibtex = f.read().decode()
                         return doi, bibtex, year
