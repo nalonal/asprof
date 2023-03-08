@@ -49,7 +49,6 @@ def tor_requests(url):
                 c.authenticate(password='asprof')
                 c.signal(Signal.NEWNYM)
                 return requests.get(url, proxies=proxies, headers=headers)
-from
 class GetOpenAPI(threading.Thread):
         def __init__(self, id):
                 self.id = id
