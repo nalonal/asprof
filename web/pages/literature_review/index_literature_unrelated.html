@@ -42,9 +42,9 @@
           <main class="inbox">
               <!-- <h2 class="text-center" style="color: black;">Literature Review</h2> -->
               <nav class="nav nav-tabs">
-                <a class="nav-link active" href="{{ url_for('literature_review_lr', id=id) }}">Uncategory Paper</a>
+                <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Uncategory Paper</a>
                 <a class="nav-link" href="{{ url_for('literature_review_lr_related', id=id) }}">Selected Paper Review</a>
-                <a class="nav-link" href="{{ url_for('literature_review_lr_unrelated', id=id) }}">Unrelated Paper</a>
+                <a class="nav-link active" href="{{ url_for('literature_review_lr_unrelated', id=id) }}">Unrelated Paper</a>
               </nav>
               <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
 
@@ -55,7 +55,7 @@
                             <span class="from"><strong>{{ paper[2] }}</strong></span>
                             <span class="date">
                             <input type="hidden" name="slr_id" class="form-control" id="slr_id" value="{{ paper[0] }}">
-                            <span class="fa fa-paper-clip"></span> <button class="btn-info related">Related</button>&nbsp;<button class="btn-warning unrelated">Unrelated</button></span>
+                            <span class="fa fa-paper-clip"></span> <button class="btn-info related">Change to Related</button></span>
                         </div>
                         <div class="title">
                           {{ paper[6] }} | {{ paper[4] }}

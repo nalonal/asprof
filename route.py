@@ -255,10 +255,45 @@ def literature_review_lr(id):
 	data = cur.fetchone()
 	output['data'] = data
 
-	cur.execute("select * from slr_tb where research_id="+id)
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant IS NULL")
 	output['papers'] = cur.fetchall()
 
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature', output = output)	
+
+
+@app.route('/literature_review/<id>/lr/related')
+def literature_review_lr_related(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	output['papers'] = cur.fetchall()
+
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_related', output = output)	
+
+@app.route('/literature_review/<id>/lr/unrelated')
+def literature_review_lr_unrelated(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='unrelated'")
+	output['papers'] = cur.fetchall()
+
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_unrelated', output = output)	
 	
 
 @app.route('/literature_review/<id>/io')
@@ -435,6 +470,30 @@ def start_count_total():
 # def testing():
 # 	keyword = "Cryptograhpy"
 # 	google(keyword)
+
+
+@app.route('/literature_review/slr/related',methods = ['POST'])
+@cross_origin()
+def literature_review_slr_related():
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['slr_id']
+	cur.execute('UPDATE slr_tb SET relevant=%s WHERE id=%s',['related',id])
+	conn.commit()
+	return Response(json.dumps(data),status=200, mimetype='application/json')
+
+@app.route('/literature_review/slr/unrelated',methods = ['POST'])
+@cross_origin()
+def literature_review_slr_unrelated():
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['slr_id']
+	cur.execute('UPDATE slr_tb SET relevant=%s WHERE id=%s',['unrelated',id])
+	conn.commit()
+	return Response(json.dumps(data),status=200, mimetype='application/json')
+
 
 
 

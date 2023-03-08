@@ -9,7 +9,60 @@
 <script src="{{ url_for('static', filename='assets/vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
 <!-- AJAX BROO -->
 <script>
+
+	
 $(document).ready(function(){
+
+
+	$(document).on("click",'.unrelated',function(){
+		var row_to_close = $(this).closest('li')
+		slr_id = $(this).closest('li').find('input').val()
+		
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/slr/unrelated',
+			data: JSON.stringify({'slr_id':slr_id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				row_to_close.remove()
+				// location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+		// alert(slr_id)
+	});
+
+	$(document).on("click",'.related',function(){
+		var row_to_close = $(this).closest('li')
+		slr_id = $(this).closest('li').find('input').val()
+		
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/slr/related',
+			data: JSON.stringify({'slr_id':slr_id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				row_to_close.remove()
+				// location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+		// alert(slr_id)
+	});
+
+
   $("#tambah_action").click(function(){
   	var research_title = $("#research_title"). val();
   	var research_author = $("#research_author"). val();
