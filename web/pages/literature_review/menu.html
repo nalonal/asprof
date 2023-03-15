@@ -20,6 +20,13 @@
     <li class="nav-item">
       <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Literature Review</a>
     </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_rr', id=id) }}">Review Result</a>
+    </li>
+
+
+
     <li class="nav-item">
       <a class="nav-link" href="{{ url_for('literature_review_io', id=id) }}">Output</a>
     </li>
@@ -32,5 +39,12 @@
 <div class='float-message-success' style="display:none">
   <div class='float-message-inner'>
   	<p>Success Save Data</p>
+  </div>
+</div>
+
+
+<div class='float-message-wait' style="display:none">
+  <div class='float-message-inner'>
+  	<p>Crawling Data..</p>
   </div>
 </div>

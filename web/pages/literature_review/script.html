@@ -15,6 +15,7 @@ $(document).ready(function(){
 		var row_to_close = $(this).closest('li')
 		slr_id = $(this).closest('li').find('input').val()
 		resume = $(this).closest('li').find('textarea').val()
+		// $('.float-message-wait').show();
 		$.ajax({
 			type: "POST",
 			url: root+'/literature_review/slr/save_review',
@@ -26,6 +27,7 @@ $(document).ready(function(){
 			success: function(output)
 			{
 				// $("#id").css("display", "none");
+				// setTimeout(() => { $('.float-message-wait').hide(); }, 1000);
 				$('.float-message-success').show();
 				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
 				// row_to_close.remove()
@@ -254,6 +256,32 @@ $(document).ready(function(){
 			success: function(output)
 			{
 				location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+
+	$("#generate_research_result").click(function(){
+		var id = $("#input_research_id"). val();
+		// var research_keyword= $("#input_research_keyword"). val();
+		$('.float-message-wait').show();
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/slr/result_crawling',
+			data: JSON.stringify({'research_id':id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				$('.float-message-wait').hide();
+				$('.float-message-success').show();
+				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
 			},
 			error: function (data)
 			{

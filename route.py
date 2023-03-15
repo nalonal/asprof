@@ -315,7 +315,6 @@ def literature_review_lr_unrelated(id):
 	output['papers'] = cur.fetchall()
 
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_unrelated', output = output)	
-	
 
 @app.route('/literature_review/<id>/io')
 def literature_review_io(id):
@@ -329,6 +328,22 @@ def literature_review_io(id):
 	data = cur.fetchone()
 	output['data'] = data
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_output', output = output)	
+	
+
+@app.route('/literature_review/<id>/rr')
+def literature_review_rr(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+	output['research'] = json.loads(data[11])
+
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_research_result', output = output)	
 
 @app.route('/literature_review/<id>/ie')
 def literature_review_ie(id):
@@ -526,6 +541,223 @@ def literature_review_slr_save_review():
 	cur.execute('UPDATE slr_tb SET resume=%s WHERE id=%s',[resume,id])
 	conn.commit()
 	return Response(json.dumps(data),status=200, mimetype='application/json')
+
+@app.route('/literature_review/slr/result_crawling',methods = ['POST'])
+@cross_origin()
+def literature_review_slr_result_crawling():
+	# print("berhasil")
+	output = {}
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['research_id']
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+
+	output['data'] = data
+	keyword_search = data[6]
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+
+	## START HERE
+	result_keyword = {}
+	result_keyword['original'] = keyword_search
+	
+	ieee_keyword_search = "("+keyword_search+")"
+	temp_ieee_search = ieee_keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')
+	ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
+	result_keyword['ieee'] = ieee_search
+	
+	temp_acm_search = "(Title:("+keyword_search+"))"
+	acm_search = temp_acm_search+" OR "+temp_acm_search.replace("Title","Abstract")+" OR "+temp_acm_search.replace("Title","Keyword")
+	result_keyword['acm'] = acm_search
+
+
+	result_keyword['sciencedirect'] = keyword_search
+
+
+	options = uc.ChromeOptions() 
+	options.add_argument('--headless')
+	driver = uc.Chrome(service=Service(ChromeDriverManager().install()), use_subprocess=True, options=options) 
+
+	## THIS IS IEEE
+	temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
+	ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
+	ieee_search = ieee_search.replace(' ','%20')
+
+	## IEEE BEFORE FILTER
+	url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")"
+	driver.get(url_conference)
+	time.sleep(5)
+	total_ieee = driver.find_element(By.XPATH, '//*[@id="xplMainContent"]/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]')
+	step_1_ieee = total_ieee.text.split("of ")[1].split(" ")[0].replace(",","")
+
+	## IEEE AFTER FILTER
+	url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")&highlight=true&returnType=SEARCH&matchPubs=true&rowsPerPage=100&refinements=ContentType:Conferences&refinements=ContentType:Journals&returnFacets=ALL"
+	driver.get(url_conference)
+	time.sleep(5)
+	total_ieee = driver.find_element(By.XPATH, '//*[@id="xplMainContent"]/div[1]/div[2]/xpl-search-dashboard/section/div/h1/span[1]')
+	total_document_ieee = total_ieee.text.split("of ")[1].split(" ")[0].replace(",","")
+	step_2_ieee = total_document_ieee
+
+	#sd
+	sciencedirect_search = keyword_search.replace("(","%28").replace(" ","%20").replace(")","%29")
+	
+	## SD BEFORE 
+	url_sciencedirect = 'https://www.sciencedirect.com/search?tak='+sciencedirect_search
+	driver.get(url_sciencedirect)
+	time.sleep(5)
+	step_1_sd = driver.find_element(By.CLASS_NAME,"ResultsFound").text.split(" ")[0].replace(",","")
+
+	## SD AFLTER FILTER
+	url_sciencedirect = 'https://www.sciencedirect.com/search?tak='+sciencedirect_search+'&show=100&articleTypes=REV%2CFLA&lastSelectedFacet=articleTypes'
+	driver.get(url_sciencedirect)
+	time.sleep(5)
+	total_document_sd = driver.find_element(By.CLASS_NAME,"ResultsFound").text.split(" ")[0].replace(",","")
+	step_2_sd = total_document_sd
+	# print(total_document_sd)
+
+	#acm
+	temp_acm_search = "(Title:("+keyword_search+"))"
+	temp_acm_search = temp_acm_search+" OR "+temp_acm_search.replace("Title","Abstract")+" OR "+temp_acm_search.replace("Title","Keyword")
+	acm_search = temp_acm_search.replace('(','%28').replace(":","%3A").replace('"',"%22").replace(" ","+").replace(')','%29')
+
+	## ACM AFTER
+	url_acm = "https://dl.acm.org/action/doSearch?AllField="+acm_search+"&pageSize=100"
+	driver.get(url_acm) 
+	time.sleep(5)
+	step_1_acm = driver.find_element(By.CLASS_NAME,"hitsLength").text.replace(",","")
+	step_2_acm = step_1_acm
+	# print(total_document_acm)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+
+	step_3_ieee = 0
+	step_3_sd = 0
+	step_3_acm = 0
+
+	for _ in related_papers:
+		if(_[11] == "IEEE"):
+			step_3_ieee = step_3_ieee+1
+		if(_[11] == "Sciencedirect"):
+			step_3_sd = step_3_sd+1
+		if(_[11] == "ACM Digital Library"):
+			step_3_acm = step_3_acm+1
+
+
+	per_stages = {}
+
+	per_stages['IEEE'] = {
+		"Stage 1":step_1_ieee,"Stage 2":step_2_ieee,"Stage 3":step_3_ieee,"Stage 4":""
+	}
+	per_stages['Science Direct'] = {
+		"Stage 1":step_1_sd,"Stage 2":step_2_sd,"Stage 3":step_3_sd,"Stage 4":""
+	}
+	per_stages['ACM Digital Library'] = {
+		"Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_sd,"Stage 4":""
+	}
+	per_stages['all'] = {
+		"Stage 1":int(step_1_ieee)+int(step_1_sd)+int(step_1_acm),"Stage 2":int(step_2_ieee)+int(step_2_sd)+int(step_2_acm),"Stage 3":int(step_3_ieee)+int(step_3_sd)+int(step_3_acm),"Stage 4":""
+	}
+
+	# datastages = per_stages
+	# datastages = [
+	# 	{"source":"IEEE","Stage 1":step_1_ieee,"Stage 2":step_2_ieee,"Stage 3":step_3_ieee,"Stage 4":""},
+	# 	{"source":"Science Direct","Stage 1":step_1_sd,"Stage 2":step_2_sd,"Stage 3":step_3_sd,"Stage 4":""},
+	# 	{"source":"ACM Digital Library","Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_sd,"Stage 4":""},
+	# 	{"source":"all","Stage 1":int(step_1_ieee)+int(step_1_sd)+int(step_1_acm),"Stage 2":int(step_2_ieee)+int(step_2_sd)+int(step_2_acm),"Stage 3":int(step_3_ieee)+int(step_3_sd)+int(step_3_acm),"Stage 4":""},
+	# ]
+	# print(result_keyword)
+	# print(datastages)
+
+	per_year = {}
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+	my_year = [_[6]for _ in related_papers]
+	my_year.sort()
+	my_dict = {i:my_year.count(i) for i in my_year}
+	per_year['all'] = my_dict 
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related' AND source='IEEE'")
+	related_papers = cur.fetchall()
+	my_year = [_[6]for _ in related_papers]
+	my_year.sort()
+	my_dict = {i:my_year.count(i) for i in my_year}
+	per_year['IEEE'] = my_dict 
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related' AND source='Sciencedirect'")
+	related_papers = cur.fetchall()
+	my_year = [_[6]for _ in related_papers]
+	my_year.sort()
+	my_dict = {i:my_year.count(i) for i in my_year}
+	per_year['Sciencedirect'] = my_dict 
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related' AND source='ACM Digital Library'")
+	related_papers = cur.fetchall()
+	my_year = [_[6]for _ in related_papers]
+	my_year.sort()
+	my_dict = {i:my_year.count(i) for i in my_year}
+	per_year['ACM Digital Library'] = my_dict 
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+
+	per_publisher = {}
+	per_publisher_ieee = 0
+	per_publisher_sd = 0
+	per_publisher_acm = 0
+
+	for _ in related_papers:
+		if(_[11] == "IEEE"):
+			per_publisher_ieee = per_publisher_ieee+1
+		if(_[11] == "Sciencedirect"):
+			per_publisher_sd = per_publisher_sd+1
+		if(_[11] == "ACM Digital Library"):
+			per_publisher_acm = per_publisher_acm+1
+
+	per_publisher['all'] = int(per_publisher_ieee)+int(per_publisher_sd)+int(per_publisher_acm)
+	per_publisher['IEEE'] = int(per_publisher_ieee)
+	per_publisher['Sciencedirect'] = int(per_publisher_sd)
+	per_publisher['ACM Digital Library'] = int(per_publisher_acm)
+	
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+	all_publisher = [_[5]for _ in related_papers]
+	all_publisher.sort()
+	related_publisher = {i:all_publisher.count(i) for i in all_publisher}
+
+	_publisher = {}
+	for _temp in related_publisher:
+		# print(_temp)
+		cur.execute("select * from slr_tb where research_id=%s AND event=%s",[id,_temp])
+		related_papers = cur.fetchall()
+		no = 0
+		_publisher[_temp] = {}
+		for __ in related_papers:
+			_data = {}
+			_data['title'] = __[2]
+			_data['author'] = __[4]
+			_data['year'] = __[6]
+			_publisher[_temp][no] = _data
+			no=no+1
+
+	this_output = {}
+	this_output['result_keyword'] = result_keyword
+	this_output['per_stages'] = per_stages
+	this_output['per_year'] = per_year
+	this_output['per_publisher'] = per_publisher
+	this_output['per_journal'] = _publisher
+	
+	# END HERE
+	cur.execute('UPDATE research_slr SET summary=%s WHERE id=%s',[json.dumps(this_output),id])
+	conn.commit()
+
+	# print(json.dumps(this_output))
+
+	return Response(json.dumps(this_output),status=200, mimetype='application/json')
 
 
 

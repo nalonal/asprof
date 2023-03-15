@@ -39,6 +39,8 @@ from fake_useragent import UserAgent
 from stem import Signal
 from stem.control import Controller
 
+from collections import OrderedDict
+
 def tor_requests(url):
         proxies = {
                 'http': 'socks5://127.0.0.1:9050',
@@ -442,7 +444,9 @@ class GetLibrary(threading.Thread):
 
         def ieee(self, keyword_search):
                 research_id = self.id
-                temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
+                ieee_keyword_search = "("+keyword_search+")"
+                temp_ieee_search = ieee_keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')
+                # temp_ieee_search = "("+keyword_search.replace('("','("Document Title":"').replace(' "',' "Document Title":"')+")"
                 ieee_search = temp_ieee_search+" OR "+temp_ieee_search.replace("Document Title","Abstract")+" OR "+temp_ieee_search.replace("Document Title","Index Terms")
                 ieee_search = ieee_search.replace(' ','%20')
                 url_conference = "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=("+ieee_search+")&highlight=true&returnType=SEARCH&matchPubs=true&rowsPerPage=100&refinements=ContentType:Conferences&refinements=ContentType:Journals&returnFacets=ALL"
@@ -527,7 +531,7 @@ def dbcon():
         )
         curr = conn.cursor()
         curr.execute('''CREATE TABLE IF NOT EXISTS research_slr\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20), research_map text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20), research_map text, summary text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS config\
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, title text, category text, value text);''')
