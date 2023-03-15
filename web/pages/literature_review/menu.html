@@ -1,0 +1,36 @@
+<nav>
+    <!-- <a href="#" class="btn btn-danger btn-block">New Email</a> -->
+    <ul class="nav" style="font-size: 14px;">
+        
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('literature_review_id', id=id) }}">General Information</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_ri', id=id) }}">Research Map</a>
+    </li>
+    <!-- <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_rq', id=id) }}">Research Question</a>
+    </li> -->
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_rk', id=id) }}">Research Keyword</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_as', id=id) }}">Automation Status</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Literature Review</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_io', id=id) }}">Output</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('literature_review_ie', id=id) }}">Export</a>
+    </li>
+    </ul>
+</nav>
+
+<div class='float-message-success' style="display:none">
+  <div class='float-message-inner'>
+  	<p>Success Save Data</p>
+  </div>
+</div>

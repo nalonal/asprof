@@ -285,33 +285,7 @@
 
     <div class="container bootdey">
       <div class="email-app">
-          <nav>
-              <!-- <a href="#" class="btn btn-danger btn-block">New Email</a> -->
-              <ul class="nav" style="font-size: 14px;">
-                  
-                  <li class="nav-item">
-                      <a class="nav-link" href="{{ url_for('literature_review_id', id=id) }}">General Information</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('literature_review_ri', id=id) }}">Research Map</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('literature_review_rk', id=id) }}">Research Keyword</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('literature_review_as', id=id) }}">Automation Status</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Literature Review</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('literature_review_io', id=id) }}">Output</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('literature_review_ie', id=id) }}">Export</a>
-                  </li>
-              </ul>
-          </nav>
+          {% include 'pages/literature_review/menu.html' %}
           <main>
             <h2 style="color: black;">Research Map              
               <button id="save_research_map" style="float:right" class="btn btn-success">Save</button>

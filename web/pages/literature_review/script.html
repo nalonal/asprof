@@ -1,3 +1,4 @@
+
 <script src="{{ url_for('static', filename='assets/vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/vendors/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
@@ -9,9 +10,33 @@
 <script src="{{ url_for('static', filename='assets/vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
 <!-- AJAX BROO -->
 <script>
-
-	
 $(document).ready(function(){
+	$(document).on("click",'.save-review',function(){
+		var row_to_close = $(this).closest('li')
+		slr_id = $(this).closest('li').find('input').val()
+		resume = $(this).closest('li').find('textarea').val()
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/slr/save_review',
+			data: JSON.stringify({'slr_id':slr_id,'resume':resume}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				// $("#id").css("display", "none");
+				$('.float-message-success').show();
+				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+				// row_to_close.remove()
+				// location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+		// alert(slr_id)
+	});
 
 
 	$(document).on("click",'.unrelated',function(){

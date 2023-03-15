@@ -539,7 +539,7 @@ def dbcon():
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, paragraph_id text, title text, link text, resume text, keyword text, doi text, bibtex text, year text, status text, relevant text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS slr_tb\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text, relevant text, bibtex text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text, relevant text, bibtex text, resume text);''')
 
         config_data = [
                 ('FACEBOOK_SESSION', 'facebook','','FACEBOOK_SESSION', 'facebook'),

@@ -261,6 +261,27 @@ def literature_review_lr(id):
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature', output = output)	
 
 
+@app.route('/literature_review/<id>/rq')
+def literature_review_rq(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+	
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_researchquestion', output = output)	
+
+
+
+
+
+
+
+
 @app.route('/literature_review/<id>/lr/related')
 def literature_review_lr_related(id):
 	output = {}
@@ -491,6 +512,18 @@ def literature_review_slr_unrelated():
 	data = request.get_json()
 	id = data['slr_id']
 	cur.execute('UPDATE slr_tb SET relevant=%s WHERE id=%s',['unrelated',id])
+	conn.commit()
+	return Response(json.dumps(data),status=200, mimetype='application/json')
+
+@app.route('/literature_review/slr/save_review',methods = ['POST'])
+@cross_origin()
+def literature_review_slr_save_review():
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['slr_id']
+	resume = data['resume']
+	cur.execute('UPDATE slr_tb SET resume=%s WHERE id=%s',[resume,id])
 	conn.commit()
 	return Response(json.dumps(data),status=200, mimetype='application/json')
 
