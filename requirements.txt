@@ -14,3 +14,4 @@ undetected-chromedriver
 lxml
 stem
 fake_useragent
+pandas

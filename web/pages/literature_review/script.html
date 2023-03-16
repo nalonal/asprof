@@ -13,13 +13,14 @@
 $(document).ready(function(){
 	$(document).on("click",'.save-review',function(){
 		var row_to_close = $(this).closest('li')
-		slr_id = $(this).closest('li').find('input').val()
+		slr_id = $(this).closest('li').find('.slr_id').val()
+		keyword = $(this).closest('li').find('.paper_keyword').val()
 		resume = $(this).closest('li').find('textarea').val()
-		// $('.float-message-wait').show();
+		$('.float-message-wait').show();
 		$.ajax({
 			type: "POST",
 			url: root+'/literature_review/slr/save_review',
-			data: JSON.stringify({'slr_id':slr_id,'resume':resume}),
+			data: JSON.stringify({'slr_id':slr_id,'resume':resume,'keyword':keyword}),
 			dataType: 'json',
 			headers: {
 				'Content-Type': 'application/json'
@@ -28,6 +29,7 @@ $(document).ready(function(){
 			{
 				// $("#id").css("display", "none");
 				// setTimeout(() => { $('.float-message-wait').hide(); }, 1000);
+				$('.float-message-wait').hide();
 				$('.float-message-success').show();
 				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
 				// row_to_close.remove()
@@ -37,7 +39,7 @@ $(document).ready(function(){
 			{
 			}
 		});
-		// alert(slr_id)
+		// alert(paper_keyword)
 	});
 
 

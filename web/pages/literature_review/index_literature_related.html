@@ -27,7 +27,7 @@
                         <div class="header">
                             <span class="from"><strong>{{ paper[2] }}</strong></span>
                             <span class="date">
-                            <input type="hidden" name="slr_id" class="form-control" id="slr_id" value="{{ paper[0] }}">
+                            <input type="hidden" name="slr_id" class="form-control slr_id" id="slr_id" value="{{ paper[0] }}">
                             <span class="fa fa-paper-clip"></span> <button class="btn-warning unrelated">Change to Unrelated</button></span>
                         </div>
                         <div class="title">
@@ -41,7 +41,9 @@
                           <a target="_blank" href="{{ paper[3] }}" style="color:blue">Source Article</a> | <a style="color:blue" target="_blank" href="https://sci-hub.se/{{ paper[9] }}">Scihub Link</a><br>
                       </div>
                       <div>
-                        
+                        <p>Keyword</p>
+                        <input type="text" name="paper_keyword" class="form-control paper_keyword" id="paper_keyword" value="{{ paper[16] if(paper[16] is not none) else '' }}">
+                        <br><p>Resume</p>
                         <textarea id="w3review" cols="200" rows="5" style="width:100%">{{ paper[15] if(paper[15] is not none) else '---------------------------------------------------------
 Research Background
 ---------------------------------------------------------

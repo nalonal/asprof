@@ -538,7 +538,8 @@ def literature_review_slr_save_review():
 	data = request.get_json()
 	id = data['slr_id']
 	resume = data['resume']
-	cur.execute('UPDATE slr_tb SET resume=%s WHERE id=%s',[resume,id])
+	keyword = data['keyword']
+	cur.execute('UPDATE slr_tb SET resume=%s,keyword=%s WHERE id=%s',[resume, keyword.lower().replace(";",","),id])
 	conn.commit()
 	return Response(json.dumps(data),status=200, mimetype='application/json')
 
@@ -656,23 +657,14 @@ def literature_review_slr_result_crawling():
 		"Stage 1":step_1_sd,"Stage 2":step_2_sd,"Stage 3":step_3_sd,"Stage 4":""
 	}
 	per_stages['ACM Digital Library'] = {
-		"Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_sd,"Stage 4":""
+		"Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_acm,"Stage 4":""
 	}
 	per_stages['all'] = {
 		"Stage 1":int(step_1_ieee)+int(step_1_sd)+int(step_1_acm),"Stage 2":int(step_2_ieee)+int(step_2_sd)+int(step_2_acm),"Stage 3":int(step_3_ieee)+int(step_3_sd)+int(step_3_acm),"Stage 4":""
 	}
 
-	# datastages = per_stages
-	# datastages = [
-	# 	{"source":"IEEE","Stage 1":step_1_ieee,"Stage 2":step_2_ieee,"Stage 3":step_3_ieee,"Stage 4":""},
-	# 	{"source":"Science Direct","Stage 1":step_1_sd,"Stage 2":step_2_sd,"Stage 3":step_3_sd,"Stage 4":""},
-	# 	{"source":"ACM Digital Library","Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_sd,"Stage 4":""},
-	# 	{"source":"all","Stage 1":int(step_1_ieee)+int(step_1_sd)+int(step_1_acm),"Stage 2":int(step_2_ieee)+int(step_2_sd)+int(step_2_acm),"Stage 3":int(step_3_ieee)+int(step_3_sd)+int(step_3_acm),"Stage 4":""},
-	# ]
-	# print(result_keyword)
-	# print(datastages)
-
 	per_year = {}
+	list_year = []
 
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
@@ -680,6 +672,9 @@ def literature_review_slr_result_crawling():
 	my_year.sort()
 	my_dict = {i:my_year.count(i) for i in my_year}
 	per_year['all'] = my_dict 
+
+	for _ in my_dict:
+		list_year.append(_)
 
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related' AND source='IEEE'")
 	related_papers = cur.fetchall()
@@ -702,6 +697,10 @@ def literature_review_slr_result_crawling():
 	my_dict = {i:my_year.count(i) for i in my_year}
 	per_year['ACM Digital Library'] = my_dict 
 
+	per_years = {}
+	per_years['data'] = per_year
+	per_years['year'] = list_year
+
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
 
@@ -722,7 +721,8 @@ def literature_review_slr_result_crawling():
 	per_publisher['IEEE'] = int(per_publisher_ieee)
 	per_publisher['Sciencedirect'] = int(per_publisher_sd)
 	per_publisher['ACM Digital Library'] = int(per_publisher_acm)
-	
+
+
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
 	all_publisher = [_[5]for _ in related_papers]
@@ -730,32 +730,70 @@ def literature_review_slr_result_crawling():
 	related_publisher = {i:all_publisher.count(i) for i in all_publisher}
 
 	_publisher = {}
+
+	_citiedby = []
+
 	for _temp in related_publisher:
 		# print(_temp)
 		cur.execute("select * from slr_tb where research_id=%s AND event=%s",[id,_temp])
 		related_papers = cur.fetchall()
 		no = 0
+
+		cur.execute("select * from scimago_tb where Title=%s",[_temp])
+		related_scimago = cur.fetchone()
+
+		# print(related_scimago)
 		_publisher[_temp] = {}
 		for __ in related_papers:
 			_data = {}
+			_data['scimago'] = related_scimago
 			_data['title'] = __[2]
 			_data['author'] = __[4]
 			_data['year'] = __[6]
+			_data['keyword'] = __[16]
+			# _data['citied'] = get_citatied(__[2])
 			_publisher[_temp][no] = _data
+			_citiedby.append(_data)
 			no=no+1
+
+	_sci = []
+	for _temp in related_publisher:
+		cur.execute("select * from scimago_tb where Title=%s",[_temp])
+		related_scimago = cur.fetchone()
+		if(related_scimago is not None):
+			data =  {}
+			data['Title'] = related_scimago[2]
+			data['SJR'] = related_scimago[5]
+			data['H_index'] = related_scimago[7]
+			data['Total_Doc'] = related_scimago[8]
+			data['Total_Ref'] = related_scimago[9]
+			data['Total_Cities'] = related_scimago[10]
+			data['Total_Citied'] = related_scimago[11]
+			_sci.append(data)
+	
+	scimagojr = pd.DataFrame(_sci)
+	scimagojr = scimagojr.sort_values(by=['SJR'], ascending=False)
+	
+	per_scimagojr = scimagojr.to_json(orient="split")
+
+	citiedby = pd.DataFrame(_citiedby)
+	citiedby = citiedby.sort_values(by=['citied'], ascending=False)
+	
+	per_citiedby = citiedby.to_json(orient="split")
+	per_citiedby = json.loads(per_citiedby)
 
 	this_output = {}
 	this_output['result_keyword'] = result_keyword
 	this_output['per_stages'] = per_stages
-	this_output['per_year'] = per_year
+	this_output['per_year'] = per_years
 	this_output['per_publisher'] = per_publisher
 	this_output['per_journal'] = _publisher
+	this_output['per_scimagojr'] = json.loads(per_scimagojr)
+	this_output['per_citiedby'] = per_citiedby
 	
 	# END HERE
 	cur.execute('UPDATE research_slr SET summary=%s WHERE id=%s',[json.dumps(this_output),id])
 	conn.commit()
-
-	# print(json.dumps(this_output))
 
 	return Response(json.dumps(this_output),status=200, mimetype='application/json')
 

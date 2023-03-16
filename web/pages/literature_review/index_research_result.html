@@ -16,25 +16,120 @@
               <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
                 <h2 style="color: black;">Research Result<button id="generate_research_result" style="float:right" class="btn btn-success btn-sm">Generate Text From Research</button></h2><br>
                 <!-- THIS RESULT -->
-                <p>
-                  {{ output['research']['result_keyword']}}
-                </p>
+                
+               
+                <table>
+                  <tr>
+                    <th>Source</th>
+                    <th>Keyword</th>
+                  </tr>
+                  {% for _ in output['research']['result_keyword'] %}
+                  <tr>
+                    <td>{{ _ }}</td>
+                    <td>{{ output['research']['result_keyword'][_] }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
 
-                <p>
-                  {{ output['research']['per_stages']}}
-                </p>
+                <br><br>
+                <table>
+                  <tr>
+                    <th>Source</th>
+                    <th>Stage 1</th>
+                    <th>Stage 2</th>
+                    <th>Stage 3</th>
+                    <th>Stage 4</th>
+                  </tr>
+                  {% for _ in output['research']['per_stages'] %}
+                  <tr>
+                    <td>{{ _ }}</td>
+                    <td>{{ output['research']['per_stages'][_]['Stage 1'] }}</td>
+                    <td>{{ output['research']['per_stages'][_]['Stage 2'] }}</td>
+                    <td>{{ output['research']['per_stages'][_]['Stage 3'] }}</td>
+                    <td>{{ output['research']['per_stages'][_]['Stage 4'] }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+                
+                <br><br>
+                <table>
+                  <tr>
+                    <th>Journal</th>
+                    <th>Title</th>
+                    <th>Year</th>
+                    <th>Keyword</th>
+                    <!-- <th>Number Citation</th> -->
+                  </tr>
+                  {% for _ in output['research']['per_journal'] %}
+                  {% for __ in output['research']['per_journal'][_] %}
+                  <tr>
+                    <td>{{ _ }}</td>
+                    <td>{{ output['research']['per_journal'][_][__]['title'] }}</td>
+                    <td>{{ output['research']['per_journal'][_][__]['year'] }}</td>
+                    <td>{{ output['research']['per_journal'][_][__]['keyword'] if(output['research']['per_journal'][_][__]['keyword'] != None) else ''}}</td>
+                    <!-- <td>-</td> -->
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+                </table>
 
-                <p>
-                  {{ output['research']['per_year']}}
-                </p>
+                <br><br>
+                <table>
 
-                <p>
-                  {{ output['research']['per_publisher']}}
-                </p>
+                  <tr>
+                    <th>Source</th>
+                    {% for __ in output['research']['per_year']['year'] %}
+                    <th>{{ __ }}</th>
+                    {% endfor %}
+                  </tr>
+                  
+                  {% for __ in output['research']['per_year']['data'] %}
+                  <tr>
+                    <td>{{ __ }}</td>
+                    {% for _ in output['research']['per_year']['year'] %}
+                    <td style="text-align: center;">{{ output['research']['per_year']['data'][__][_] }}</td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </table>
 
-                <p>
-                  {{ output['research']['per_journal']}}
-                </p>
+                <br><br>
+                <table>
+                  <tr>
+                    <th>Source</th>
+                    {% for _ in output['research']['per_publisher'] %}
+                    <th>{{ _ }}</th>
+                    {% endfor %}
+                  </tr>
+                 
+                  <tr>
+                    <td>Total</td>
+                    {% for _ in output['research']['per_publisher'] %}
+                    <td style="text-align:center">{{ output['research']['per_publisher'][_] }}</td>
+                    {% endfor %}
+      
+                  </tr>
+                </table>
+
+                  <br><br>
+                  <table>
+                  <tr>
+                    {% for _ in output['research']['per_scimagojr']['columns'] %}
+                    <th>{{ _ }}</th>
+                    {% endfor %}
+                  </tr>
+                 
+                  {% for _ in output['research']['per_scimagojr']['data'] %}
+                  <tr>
+                    {% for __ in _%}
+                    <td>{{ __ }}</td>
+                    {% endfor %}
+                    
+                  </tr>
+                  {% endfor %}
+                  
+                </table>
+                
    
                 <!-- THIS END RESULT -->
             </main>

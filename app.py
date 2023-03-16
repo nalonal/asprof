@@ -41,6 +41,10 @@ from stem.control import Controller
 
 from collections import OrderedDict
 
+import pandas as pd
+import json
+from pandas import json_normalize
+
 def tor_requests(url):
         proxies = {
                 'http': 'socks5://127.0.0.1:9050',
@@ -51,6 +55,43 @@ def tor_requests(url):
                 c.authenticate(password='asprof')
                 c.signal(Signal.NEWNYM)
                 return requests.get(url, proxies=proxies, headers=headers)
+
+def get_citatied(input_keyword):
+        this_keyword = urllib.parse.quote(input_keyword).replace("%20", "+")
+        url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword
+        th = 0
+        while True:
+                try:
+                        response=tor_requests(url)
+                        time.sleep(2)
+                        soup=BeautifulSoup(response.content,'lxml')
+                        soup = soup.select('[data-lid]')[0]
+                        break
+                except:
+                        if(th > 5):
+                                print("Scholar Network Error")
+                                print(url)
+                                return "Error"
+                        else:
+                                th = th+1
+                                pass
+        try:
+                _ = soup.find_all("div", class_="gs_fl")[1]
+        except:
+                _ = soup.find_all("div", class_="gs_fl")[0]
+
+        try:
+                link = _.find_all("a")[2]
+                final_link = link.text
+                if final_link.find("Cited by") != -1:
+                        final_link = final_link.replace("Cited by ","")
+                else:
+                        final_link = 0
+                return final_link
+        except:
+                print("Scholar Crawling Element Error")
+                return "Error"
+
 class GetOpenAPI(threading.Thread):
         def __init__(self, id):
                 self.id = id
@@ -388,7 +429,8 @@ class GetLibrary(threading.Thread):
                                         doi = "None"
 
                                 publish_name = event
-                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "ACM Digital Library"])
+                                citation = get_citatied(title)
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "ACM Digital Library",citation])
                                 self.conn.commit()
 
 
@@ -436,8 +478,8 @@ class GetLibrary(threading.Thread):
                                         publish_type = "None"
                                 
                                 publish_name = event
-
-                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "Sciencedirect"])
+                                citation = get_citatied(title)
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "Sciencedirect", citation])
                                 self.conn.commit()
 
 
@@ -478,6 +520,7 @@ class GetLibrary(threading.Thread):
                                         event = per_this_element.find_element(By.CLASS_NAME,"description").find_element(By.TAG_NAME,"a").text
                                 except:
                                         event = "None"
+
                                 try:
                                         description = per_this_element.find_element(By.CLASS_NAME,"publisher-info-container").text
                                         year = description.split(" | ")[0].replace("Year: ","")
@@ -489,8 +532,8 @@ class GetLibrary(threading.Thread):
                                         year = "None"
                                         publish_type = "None"
                                         publish_name = "None"
-                               
-                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "IEEE"])
+                                citation = get_citatied(title)
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "IEEE", citation])
                                 self.conn.commit()
 
 
@@ -543,7 +586,7 @@ def dbcon():
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, paragraph_id text, title text, link text, resume text, keyword text, doi text, bibtex text, year text, status text, relevant text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS slr_tb\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text, relevant text, bibtex text, resume text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, title text, link text, author text, event text, year text, publish_type text, publish_name text, doi text, abstract text, source text, status text, relevant text, bibtex text, resume text, keyword text, citation text);''')
 
         config_data = [
                 ('FACEBOOK_SESSION', 'facebook','','FACEBOOK_SESSION', 'facebook'),
