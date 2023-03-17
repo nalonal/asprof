@@ -341,8 +341,10 @@ def literature_review_rr(id):
 	cur.execute("select * from research_slr where id="+id)
 	data = cur.fetchone()
 	output['data'] = data
-	output['research'] = json.loads(data[11])
-
+	if(data[11]):
+		output['research'] = json.loads(data[11])
+	else:
+		output['research'] = data[11]
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_research_result', output = output)	
 
 @app.route('/literature_review/<id>/ie')
@@ -444,11 +446,47 @@ def setting_update():
 def automate_openai():
 	data = request.get_json()
 	id = data['id']
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	cur.execute("delete from paragraph_tb where research_id="+id)
+	conn.commit()
+	cur.execute("delete from references_tb where research_id="+id)
+	conn.commit()
+	cur.execute("delete from slr_tb where research_id="+id)
+	conn.commit()
 	getOpenAPI = GetOpenAPI(id)
 	getOpenAPI.start()
 	getLibrary = GetLibrary(id)
 	getLibrary.start()
 	# return {'status': 'ok'}, 200
+	return Response(json.dumps({'success':True}),status=200, mimetype='application/json')
+
+@app.route('/api/automate_openai_literature', methods=['POST'])
+@cross_origin()
+def automate_openai_literature():
+	data = request.get_json()
+	id = data['id']
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	cur.execute("delete from paragraph_tb where research_id="+id)
+	conn.commit()
+	cur.execute("delete from references_tb where research_id="+id)
+	conn.commit()
+	getOpenAPI = GetOpenAPI(id)
+	getOpenAPI.start()
+	return Response(json.dumps({'success':True}),status=200, mimetype='application/json')
+
+@app.route('/api/automate_openai_paper', methods=['POST'])
+@cross_origin()
+def automate_openai_paper():
+	data = request.get_json()
+	id = data['id']
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	cur.execute("delete from slr_tb where research_id="+id)
+	conn.commit()
+	getLibrary = GetLibrary(id)
+	getLibrary.start()
 	return Response(json.dumps({'success':True}),status=200, mimetype='application/json')
 
 @app.route('/api/start_count_total', methods=['POST'])
@@ -751,9 +789,15 @@ def literature_review_slr_result_crawling():
 			_data['author'] = __[4]
 			_data['year'] = __[6]
 			_data['keyword'] = __[16]
-			# _data['citied'] = get_citatied(__[2])
+			_data['citied'] = __[17]
+			_mc = {}
+			_mc['title'] = __[2]
+			_mc['author'] = __[4]
+			_mc['year'] = __[6]
+			_mc['keyword'] = __[16]
+			_mc['citied'] = int(__[17])
 			_publisher[_temp][no] = _data
-			_citiedby.append(_data)
+			_citiedby.append(_mc)
 			no=no+1
 
 	_sci = []

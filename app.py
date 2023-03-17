@@ -329,17 +329,24 @@ class GetLibrary(threading.Thread):
                 data_total_process_references = self.cur.fetchall()
                 for _ in data_total_process_references:
                         this_id = _[0]
-                        self.driver.get(_[3]) 
+                        self.driver.get(_[3]+"keywords") 
                         time.sleep(10)
                         try:
                                 abstract = self.driver.find_element(By.CLASS_NAME,"abstract-text").text.replace("Abstract:\n","")
-                                doi = self.driver.find_element(By.CLASS_NAME,"stats-document-abstract-doi").text.replace("DOI: ","")
                         except:
                                 abstract = ""
+                        try:
+                                doi = self.driver.find_element(By.CLASS_NAME,"stats-document-abstract-doi").text.replace("DOI: ","")
+                        except:
                                 doi = ""
+                        try:
+                                abstract_keyword = self.driver.find_elements(By.CLASS_NAME,"doc-keywords-list-item")[-1].text.split("Author Keywords")[1].replace("\n","")
+                                abstract_keyword = abstract_keyword.lower()
+                        except:
+                                abstract_keyword = ""
                         strencode = abstract.encode("ascii", "ignore")
                         abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s WHERE id=%s',[abstract, doi, "finished", this_id])
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s, keyword=%s WHERE id=%s',[abstract, doi, "finished", abstract_keyword, this_id])
                         self.conn.commit()
 
         def sciencedirect_crawling(self):
@@ -352,13 +359,25 @@ class GetLibrary(threading.Thread):
                         time.sleep(10)
                         try:
                                 abstract = self.driver.find_element(By.CLASS_NAME,"abstract").text.replace("Abstract\n","")
-                                doi = self.driver.find_element(By.CLASS_NAME,"doi").text.replace("https://doi.org/","")
                         except:
                                 abstract = ""
+                        try:
+                                doi = self.driver.find_element(By.CLASS_NAME,"doi").text.replace("https://doi.org/","")
+                        except:
                                 doi = ""
+                
+                        key = []
+                        try:
+                                for mykey in self.driver.find_elements(By.CLASS_NAME,"keyword"):
+                                        key.append(mykey.text)
+                                abstract_keyword = ",".join(key)
+                                abstract_keyword = abstract_keyword.lower()
+                        except:
+                                abstract_keyword = ""
                         strencode = abstract.encode("ascii", "ignore")
                         abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s WHERE id=%s',[abstract, doi, "finished", this_id])
+                        print(abstract_keyword)
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s, keyword=%s WHERE id=%s',[abstract, doi, "finished", abstract_keyword, this_id])
                         self.conn.commit()
         
         def acm_crawling(self):
@@ -371,11 +390,13 @@ class GetLibrary(threading.Thread):
                         time.sleep(10)
                         try:
                                 abstract = self.driver.find_element(By.CLASS_NAME,"abstractInFull").text
+                        except:
+                                abstract = ""
+                        try:
                                 authors = self.driver.find_elements(By.CLASS_NAME,"loa__author-name")
                                 this_author = [per_authors.text for per_authors in authors]
                                 author = "; ".join(this_author)
                         except:
-                                abstract = ""
                                 author = ""
                         strencode = abstract.encode("ascii", "ignore")
                         abstract = strencode.decode()

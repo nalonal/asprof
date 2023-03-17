@@ -25,6 +25,13 @@
                 </thead>
                 <tbody>
                   <tr>
+                    <th scope="row"></th>
+                    <td></td>
+                    <td style="text-align: center;">
+                    <button id="start_automation_literature" class="btn btn-warning btn-sm">Restart Automation Literature</button>
+                    </td>
+                  </tr>
+                  <tr>
                     <th scope="row">1</th>
                     <td>Introduction</td>
                     <td style="text-align: center;">
@@ -60,12 +67,18 @@
                     {% endif %}
                     </td>
                   </tr>
-
                   <tr>
                     <th scope="row">4</th>
                     <td>Literature Crawling</td>
                     <td style="text-align: center;">
                       {{ output['status']['total_process_references'] }}/{{ output['status']['total_references'] }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"></th>
+                    <td></td>
+                    <td style="text-align: center;">
+                    <button id="start_automation_paper" class="btn btn-warning btn-sm">Restart Automation Paper</button>
                     </td>
                   </tr>
                   <tr>

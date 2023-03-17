@@ -216,6 +216,55 @@ $(document).ready(function(){
 
 	});
 
+	$("#start_automation_paper").click(function(){
+		var id = $("#input_research_id"). val();
+		// alert(id)
+		$.ajax({
+			type: "POST",
+			url: root+'/api/automate_openai_paper',
+			data: JSON.stringify({'id':id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				$('.float-message-success').show();
+				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+				// window.open(root+'/literature_review',"_self")
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+	$("#start_automation_literature").click(function(){
+		var id = $("#input_research_id"). val();
+		// alert(id)
+		$.ajax({
+			type: "POST",
+			url: root+'/api/automate_openai_literature',
+			data: JSON.stringify({'id':id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				$('.float-message-success').show();
+				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+				// window.open(root+'/literature_review',"_self")
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
+
 
 	$("#test_research_keyword").click(function(){
 		var input_keyword = $("#input_research_keyword"). val();

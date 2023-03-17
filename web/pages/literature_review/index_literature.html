@@ -41,8 +41,10 @@
                         <div class="title">
                           <a target="_blank" href="{{ paper[3] }}" style="color:blue">Source Article</a> | <a style="color:blue" target="_blank" href="https://sci-hub.se/{{ paper[9] }}">Scihub Link</a><br>
                       </div>
-                      <div>   
-                        
+                      <div> 
+                        <p>Keyword</p>
+                        <input type="text" name="paper_keyword" class="form-control paper_keyword" id="paper_keyword" value="{{ paper[16] if(paper[16] is not none) else '' }}">
+                        <br><p>Resume</p>  
                         <textarea id="w3review" cols="200" rows="5" style="width:100%">{{ paper[15] if(paper[15] is not none) else '---------------------------------------------------------
 Research Background
 ---------------------------------------------------------
