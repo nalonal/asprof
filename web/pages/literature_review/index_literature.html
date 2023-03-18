@@ -16,19 +16,26 @@
           <main class="inbox">
               <!-- <h2 class="text-center" style="color: black;">Literature Review</h2> -->
               <nav class="nav nav-tabs">
-                <a class="nav-link active" href="{{ url_for('literature_review_lr', id=id) }}">Uncategory Paper</a>
-                <a class="nav-link" href="{{ url_for('literature_review_lr_related', id=id) }}">Selected Paper Review</a>
-                <a class="nav-link" href="{{ url_for('literature_review_lr_unrelated', id=id) }}">Unrelated Paper</a>
+                <a class="nav-link" href="{{ url_for('literature_review_lr_related', id=id) }}">Selected Paper Review ({{output['relevant']}})</a>
+                <a class="nav-link active" href="{{ url_for('literature_review_lr', id=id) }}">Uncategory Paper ({{ output['total_papers'] }})</a>
+                <a class="nav-link" href="{{ url_for('literature_review_lr_unrelated', id=id) }}">Unrelated Paper ({{output['unrelevant']}})</a>
+                <a class="nav-link" href="{{ url_for('literature_review_lr_eliminated', id=id) }}">Eliminated Paper ({{output['eliminated']}})</a>
               </nav>
               <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
-
+              {% if(output['duplicated'] > 0)%}
+              <br>
+              <div class="alert alert-primary" role="alert">
+                Found {{output['duplicated']}} Duplicated Papers (automatically eliminate)
+              </div>
+              {% endif %}
               <ul class="messages">
                 {% for paper in output['papers'] %}
                 <li class="message" style="color:black">
+                  <input type="hidden" name="slr_id" class="form-control slr_id" id="slr_id" value="{{ paper[0] }}">
                         <div class="header">
                             <span class="from"><strong>{{ paper[2] }}</strong></span>
                             <span class="date">
-                            <input type="hidden" name="slr_id" class="form-control" id="slr_id" value="{{ paper[0] }}">
+                            
                             <span class="fa fa-paper-clip"></span> <button class="btn-info related">Related</button>&nbsp;<button class="btn-warning unrelated">Unrelated</button></span>
                         </div>
                         <div class="title">
@@ -44,21 +51,9 @@
                       <div> 
                         <p>Keyword</p>
                         <input type="text" name="paper_keyword" class="form-control paper_keyword" id="paper_keyword" value="{{ paper[16] if(paper[16] is not none) else '' }}">
-                        <br><p>Resume</p>  
-                        <textarea id="w3review" cols="200" rows="5" style="width:100%">{{ paper[15] if(paper[15] is not none) else '---------------------------------------------------------
-Research Background
----------------------------------------------------------
-                          
----------------------------------------------------------
-Research Purpose
----------------------------------------------------------
-                          
----------------------------------------------------------
-Research Goals
----------------------------------------------------------
-
-' }}</textarea>
-                        <br><button class="btn-success save-review" style="margin-top: 5px;">Save Review</button>
+                        <br><p>Resume</p> 
+                        <textarea id="w3review" cols="200" rows="8" style="width:100%">{{ paper[15] if(paper[15] is not none) else output['data'][14] }}</textarea>
+                        <br><button class="btn-success save-review" style="margin-top: 5px;">Save Review</button>&nbsp;<button class="btn-danger eliminated" style="margin-top: 5px;">I Think This Paper Is Not Relevant After Full Reading</button> 
                       </div>                      
                 </li>
                 {% endfor %}

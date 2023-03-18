@@ -45,6 +45,18 @@ import pandas as pd
 import json
 from pandas import json_normalize
 
+import matplotlib.pyplot as plt
+import networkx as nx
+from networkx.readwrite import json_graph
+import mpld3
+import seaborn as sns
+from flask import Markup
+import sys
+import urllib.request
+from urllib.error import HTTPError
+
+import bibtexparser
+
 def tor_requests(url):
         proxies = {
                 'http': 'socks5://127.0.0.1:9050',
@@ -63,7 +75,7 @@ def get_citatied(input_keyword):
         while True:
                 try:
                         response=tor_requests(url)
-                        time.sleep(2)
+                        time.sleep(3)
                         soup=BeautifulSoup(response.content,'lxml')
                         soup = soup.select('[data-lid]')[0]
                         break
@@ -103,13 +115,15 @@ class GetOpenAPI(threading.Thread):
                 try:
                         result = self.cr.works(query = title)
                         doi = result['message']['items'][0]['DOI']
-                        year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
+                        # year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
                         BASE_URL = 'http://dx.doi.org/'
                         url = BASE_URL + doi
                         req = urllib.request.Request(url)
                         req.add_header('Accept', 'application/x-bibtex')
                         with urllib.request.urlopen(req) as f:
                                 bibtex = f.read().decode()
+                        bib_database = bibtexparser.loads(bibtex)
+                        year = bib_database.entries[0]['year']
                         return doi, bibtex, year
                 except HTTPError as e:
                         if e.code == 404:
@@ -258,6 +272,7 @@ class GetOpenAPI(threading.Thread):
                         id = _[0]
                         title = _[3] 
                         doi, bibtex, year = self.doi_file(title)
+                        # print(year)
                         cur.execute('UPDATE references_tb SET doi=%s, bibtex=%s, year=%s,  status=%s WHERE id=%s',[doi, bibtex, year, 'finished',id])
                         conn.commit()
 
@@ -274,7 +289,6 @@ class GetLibrary(threading.Thread):
                 self.conn = dbcon()
                 self.cur = self.conn.cursor()
                 self.cr = Crossref()
-                
                 self.options = uc.ChromeOptions() 
                 self.options.add_argument('--headless')
                 self.driver = uc.Chrome(service=Service(ChromeDriverManager().install()), use_subprocess=True, options=self.options) 
@@ -282,9 +296,8 @@ class GetLibrary(threading.Thread):
 
         def doi_file(self, title):
                 result = self.cr.works(query = title)
-                # result = self.cr.works(query = title)
                 doi = result['message']['items'][0]['DOI']
-                year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
+                # year = result['message']['items'][0]['indexed']['date-time'].split("-")[0]
                 BASE_URL = 'http://dx.doi.org/'
                 url = BASE_URL + doi
                 req = urllib.request.Request(url)
@@ -292,6 +305,8 @@ class GetLibrary(threading.Thread):
                 try:
                         with urllib.request.urlopen(req) as f:
                                 bibtex = f.read().decode()
+                        bib_database = bibtexparser.loads(bibtex)
+                        year = bib_database.entries[0]['year']
                         return doi, bibtex, year
                 except HTTPError as e:
                         if e.code == 404:
@@ -299,15 +314,52 @@ class GetLibrary(threading.Thread):
                         else:
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
+        def get_doi2bibtex(self,doi):
+                BASE_URL = 'http://dx.doi.org/'
+                url = BASE_URL + doi
+                req = urllib.request.Request(url)
+                req.add_header('Accept', 'application/x-bibtex')
+                try:
+                        with urllib.request.urlopen(req) as f:
+                                bibtex = f.read().decode()
+                        bib_database = bibtexparser.loads(bibtex)
+                        year = bib_database.entries[0]['year']
+                        # print(year)
+                        return bibtex, year
+                except HTTPError as e:
+                        if e.code == 404:
+                                return 'DOI not found.', ''
+                        else:
+                                return 'Service unavailable.',''
+
         def get_bibtex(self):
                 research_id = self.id
                 self.cur.execute("select * from slr_tb where research_id="+research_id)
                 for _ in self.cur.fetchall():
                         id = _[0]
-                        title = _[3] 
-                        doi, bibtex, year = self.doi_file(title)
-                        self.cur.execute('UPDATE slr_tb SET bibtex=%s WHERE id=%s',[bibtex,id])
-                        self.conn.commit()
+                        title = _[2] 
+                        doi = _[9]
+                        if(doi != ''):
+                                bibtex, year= self.get_doi2bibtex(doi)
+                                self.cur.execute('UPDATE slr_tb SET bibtex=%s, year=%s WHERE id=%s',[bibtex,year,id])
+                                self.conn.commit()
+                        else:
+                                doi, bibtex, year = self.doi_file(title)
+                                self.cur.execute('UPDATE slr_tb SET doi=%s, bibtex=%s, year=% WHERE id=%s',[doi, bibtex,year,id])
+                                self.conn.commit()
+        
+        def remove_duplicate(self):
+                research_id = self.id
+                self.cur.execute("SELECT id,title FROM slr_tb WHERE title IN (SELECT title FROM slr_tb WHERE research_id=%s GROUP BY title HAVING COUNT(*) > 1) AND research_id=%s ORDER BY title",(research_id,research_id))
+                total_duplicate = self.cur.fetchall()
+                no = 0
+                # print(total_duplicate)
+                for _ in total_duplicate:
+                        if(no == 0):
+                                self.cur.execute('UPDATE slr_tb SET relevant=%s WHERE id=%s',["duplicated",_[0]])
+                                self.conn.commit()
+                        no = no + 1
+                        no = no % 2 
 
         def run(self):
                 self.cur.execute("select * from research_slr where id="+self.id)
@@ -322,6 +374,7 @@ class GetLibrary(threading.Thread):
                 self.sciencedirect_crawling()
                 self.acm_crawling()
                 self.get_bibtex()
+                self.remove_duplicate()
 
         def ieee_crawling(self):
                 research_id = self.id
@@ -398,9 +451,13 @@ class GetLibrary(threading.Thread):
                                 author = "; ".join(this_author)
                         except:
                                 author = ""
+                        try:
+                                doi = self.driver.find_element(By.CLASS_NAME,"issue-item__detail").find_elements(By.TAG_NAME,"span")[-1].text.replace("https://doi.org/","")
+                        except:
+                                doi = "None"
                         strencode = abstract.encode("ascii", "ignore")
                         abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s WHERE id=%s',[abstract, author, "finished", this_id])
+                        self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s, doi=%s WHERE id=%s',[abstract, author, "finished", doi, this_id])
                         self.conn.commit()
                 
                 
@@ -595,7 +652,7 @@ def dbcon():
         )
         curr = conn.cursor()
         curr.execute('''CREATE TABLE IF NOT EXISTS research_slr\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20), research_map text, summary text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20), research_map text, summary text, research_question text, research_identification text, research_question_list_template text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS config\
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, title text, category text, value text);''')

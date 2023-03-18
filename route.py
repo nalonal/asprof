@@ -46,7 +46,24 @@ def literature_review_update():
 	id = data['id']
 	research_title = data['research_title']
 	research_author = data['research_author']
-	cur.execute('UPDATE research_slr SET research_title=%s, research_author=%s WHERE id=%s',[research_title,research_author,id])
+	research_question = data['research_question']
+	research_identification = data['research_identification']
+	research_question_list_template = data['research_question_list_template']
+	cur.execute('UPDATE research_slr SET research_title=%s, research_author=%s, research_question=%s, research_identification=%s, research_question_list_template=%s WHERE id=%s',[research_title,research_author,research_question,research_identification,research_question_list_template,id])
+	
+	
+	conn.commit()
+	return Response(json.dumps(data),status=200, mimetype='application/json')
+
+@app.route('/literature_review/update/output',methods = ['POST'])
+@cross_origin()
+def literature_review_update_output():
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['id']
+	output = data['output']
+	cur.execute('UPDATE research_slr SET output =%s WHERE id=%s',[output,id])
 	conn.commit()
 	return Response(json.dumps(data),status=200, mimetype='application/json')
 
@@ -112,6 +129,9 @@ def literature_review_delete():
 	conn.commit()
 
 	cur.execute('DELETE from references_tb WHERE research_id=%s',[id])
+	conn.commit()
+
+	cur.execute('DELETE from slr_tb WHERE research_id=%s',[id])
 	conn.commit()
 
 	return Response(json.dumps(data),status=200, mimetype='application/json')
@@ -253,10 +273,27 @@ def literature_review_lr(id):
 	cur = conn.cursor(buffered=True)
 	cur.execute("select * from research_slr where id="+id)
 	data = cur.fetchone()
+
 	output['data'] = data
 
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant IS NULL")
 	output['papers'] = cur.fetchall()
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant IS NULL")
+	total_papers = cur.fetchall()
+	output['total_papers'] = len(total_papers)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='duplicated'")
+	this_duplicated = cur.fetchall()
+	output['duplicated'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	this_duplicated = cur.fetchall()
+	output['relevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='unrelated'")
+	this_duplicated = cur.fetchall()
+	output['unrelevant'] = len(this_duplicated)
 
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature', output = output)	
 
@@ -277,11 +314,6 @@ def literature_review_rq(id):
 
 
 
-
-
-
-
-
 @app.route('/literature_review/<id>/lr/related')
 def literature_review_lr_related(id):
 	output = {}
@@ -296,6 +328,26 @@ def literature_review_lr_related(id):
 
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	output['papers'] = cur.fetchall()
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant IS NULL")
+	total_papers = cur.fetchall()
+	output['total_papers'] = len(total_papers)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='duplicated'")
+	this_duplicated = cur.fetchall()
+	output['duplicated'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	this_duplicated = cur.fetchall()
+	output['relevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='unrelated'")
+	this_duplicated = cur.fetchall()
+	output['unrelevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='eliminated'")
+	this_eliminated = cur.fetchall()
+	output['eliminated'] = len(this_eliminated)
 
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_related', output = output)	
 
@@ -314,7 +366,67 @@ def literature_review_lr_unrelated(id):
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='unrelated'")
 	output['papers'] = cur.fetchall()
 
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant IS NULL")
+	total_papers = cur.fetchall()
+	output['total_papers'] = len(total_papers)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='duplicated'")
+	this_duplicated = cur.fetchall()
+	output['duplicated'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	this_duplicated = cur.fetchall()
+	output['relevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='unrelated'")
+	this_duplicated = cur.fetchall()
+	output['unrelevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='eliminated'")
+	this_eliminated = cur.fetchall()
+	output['eliminated'] = len(this_eliminated)
+
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_unrelated', output = output)	
+
+
+@app.route('/literature_review/<id>/lr/eliminated')
+def literature_review_lr_eliminated(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='eliminated'")
+	output['papers'] = cur.fetchall()
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant IS NULL")
+	total_papers = cur.fetchall()
+	output['total_papers'] = len(total_papers)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='duplicated'")
+	this_duplicated = cur.fetchall()
+	output['duplicated'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	this_duplicated = cur.fetchall()
+	output['relevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='unrelated'")
+	this_duplicated = cur.fetchall()
+	output['unrelevant'] = len(this_duplicated)
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='eliminated'")
+	this_eliminated = cur.fetchall()
+	output['eliminated'] = len(this_eliminated)
+
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_literature_eliminated', output = output)	
+
+
 
 @app.route('/literature_review/<id>/io')
 def literature_review_io(id):
@@ -343,6 +455,7 @@ def literature_review_rr(id):
 	output['data'] = data
 	if(data[11]):
 		output['research'] = json.loads(data[11])
+
 	else:
 		output['research'] = data[11]
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_research_result', output = output)	
@@ -545,6 +658,16 @@ def start_count_total():
 # 	keyword = "Cryptograhpy"
 # 	google(keyword)
 
+@app.route('/literature_review/slr/eliminated',methods = ['POST'])
+@cross_origin()
+def literature_review_slr_eliminated():
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['slr_id']
+	cur.execute('UPDATE slr_tb SET relevant=%s WHERE id=%s',['eliminated',id])
+	conn.commit()
+	return Response(json.dumps(data),status=200, mimetype='application/json')
 
 @app.route('/literature_review/slr/related',methods = ['POST'])
 @cross_origin()
@@ -600,6 +723,7 @@ def literature_review_slr_result_crawling():
 	related_papers = cur.fetchall()
 
 	## START HERE
+	
 	result_keyword = {}
 	result_keyword['original'] = keyword_search
 	
@@ -670,35 +794,72 @@ def literature_review_slr_result_crawling():
 	step_2_acm = step_1_acm
 	# print(total_document_acm)
 
-	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='duplicated'")
 	related_papers = cur.fetchall()
 
-	step_3_ieee = 0
-	step_3_sd = 0
-	step_3_acm = 0
+	step_3_ieee_min = 0
+	step_3_sd_min = 0
+	step_3_acm_min = 0
 
 	for _ in related_papers:
 		if(_[11] == "IEEE"):
-			step_3_ieee = step_3_ieee+1
+			step_3_ieee_min = step_3_ieee_min+1
 		if(_[11] == "Sciencedirect"):
-			step_3_sd = step_3_sd+1
+			step_3_sd_min = step_3_sd_min+1
 		if(_[11] == "ACM Digital Library"):
-			step_3_acm = step_3_acm+1
+			step_3_acm_min = step_3_acm_min+1
 
+	step_3_ieee = int(step_2_ieee) - step_3_ieee_min
+	step_3_sd = int(step_2_sd) - step_3_sd_min
+	step_3_acm = int(step_2_acm) - step_3_acm_min
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+
+	step_5_ieee = 0
+	step_5_sd = 0
+	step_5_acm = 0
+
+	for _ in related_papers:
+		if(_[11] == "IEEE"):
+			step_5_ieee = step_5_ieee+1
+		if(_[11] == "Sciencedirect"):
+			step_5_sd = step_5_sd+1
+		if(_[11] == "ACM Digital Library"):
+			step_5_acm = step_5_acm+1
+	
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='eliminated'")
+	related_papers = cur.fetchall()
+
+	step_4_ieee_min = 0
+	step_4_sd_min = 0
+	step_4_acm_min = 0
+
+	for _ in related_papers:
+		if(_[11] == "IEEE"):
+			step_4_ieee_min = step_4_ieee_min+1
+		if(_[11] == "Sciencedirect"):
+			step_4_sd_min = step_4_sd_min+1
+		if(_[11] == "ACM Digital Library"):
+			step_4_acm_min = step_4_acm_min+1
+
+	step_4_ieee = int(step_5_ieee) + step_4_ieee_min
+	step_4_sd = int(step_5_sd) + step_4_sd_min
+	step_4_acm = int(step_5_acm) + step_4_acm_min
 
 	per_stages = {}
 
 	per_stages['IEEE'] = {
-		"Stage 1":step_1_ieee,"Stage 2":step_2_ieee,"Stage 3":step_3_ieee,"Stage 4":""
+		"Stage 1":step_1_ieee,"Stage 2":step_2_ieee,"Stage 3":step_3_ieee,"Stage 4":step_4_ieee,"Stage 5":step_5_ieee
 	}
 	per_stages['Science Direct'] = {
-		"Stage 1":step_1_sd,"Stage 2":step_2_sd,"Stage 3":step_3_sd,"Stage 4":""
+		"Stage 1":step_1_sd,"Stage 2":step_2_sd,"Stage 3":step_3_sd,"Stage 4":step_4_sd,"Stage 5":step_5_sd
 	}
 	per_stages['ACM Digital Library'] = {
-		"Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_acm,"Stage 4":""
+		"Stage 1":step_1_acm,"Stage 2":step_2_acm,"Stage 3":step_3_acm,"Stage 4":step_4_acm,"Stage 5":step_5_acm
 	}
 	per_stages['all'] = {
-		"Stage 1":int(step_1_ieee)+int(step_1_sd)+int(step_1_acm),"Stage 2":int(step_2_ieee)+int(step_2_sd)+int(step_2_acm),"Stage 3":int(step_3_ieee)+int(step_3_sd)+int(step_3_acm),"Stage 4":""
+		"Stage 1":int(step_1_ieee)+int(step_1_sd)+int(step_1_acm),"Stage 2":int(step_2_ieee)+int(step_2_sd)+int(step_2_acm),"Stage 3":int(step_3_ieee)+int(step_3_sd)+int(step_3_acm),"Stage 4":int(step_4_ieee)+int(step_4_sd)+int(step_4_acm),"Stage 5":int(step_5_ieee)+int(step_5_sd)+int(step_5_acm)
 	}
 
 	per_year = {}
@@ -760,7 +921,6 @@ def literature_review_slr_result_crawling():
 	per_publisher['Sciencedirect'] = int(per_publisher_sd)
 	per_publisher['ACM Digital Library'] = int(per_publisher_acm)
 
-
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
 	all_publisher = [_[5]for _ in related_papers]
@@ -773,7 +933,7 @@ def literature_review_slr_result_crawling():
 
 	for _temp in related_publisher:
 		# print(_temp)
-		cur.execute("select * from slr_tb where research_id=%s AND event=%s",[id,_temp])
+		cur.execute("select * from slr_tb where research_id=%s AND event=%s AND relevant='related'",[id,_temp])
 		related_papers = cur.fetchall()
 		no = 0
 
@@ -789,6 +949,7 @@ def literature_review_slr_result_crawling():
 			_data['author'] = __[4]
 			_data['year'] = __[6]
 			_data['keyword'] = __[16]
+			_data['source'] = __[11]
 			_data['citied'] = __[17]
 			_mc = {}
 			_mc['title'] = __[2]
@@ -796,12 +957,15 @@ def literature_review_slr_result_crawling():
 			_mc['year'] = __[6]
 			_mc['keyword'] = __[16]
 			_mc['citied'] = int(__[17])
+			_mc['source'] = __[11]
 			_publisher[_temp][no] = _data
 			_citiedby.append(_mc)
 			no=no+1
+	
 
 	_sci = []
 	for _temp in related_publisher:
+		# print(_temp)
 		cur.execute("select * from scimago_tb where Title=%s",[_temp])
 		related_scimago = cur.fetchone()
 		if(related_scimago is not None):
@@ -813,18 +977,87 @@ def literature_review_slr_result_crawling():
 			data['Total_Ref'] = related_scimago[9]
 			data['Total_Cities'] = related_scimago[10]
 			data['Total_Citied'] = related_scimago[11]
+			data['Country'] = related_scimago[15]
+			data['Region'] = related_scimago[16]
+			data['Publisher'] = related_scimago[17]
+			# print(data)
 			_sci.append(data)
 	
-	scimagojr = pd.DataFrame(_sci)
-	scimagojr = scimagojr.sort_values(by=['SJR'], ascending=False)
-	
-	per_scimagojr = scimagojr.to_json(orient="split")
+	# print(_sci)
+	if(len(_sci) > 0):
+		scimagojr = pd.DataFrame(_sci)
+		scimagojr = scimagojr.sort_values(by=['SJR'], ascending=False)
+		
+		per_scimagojr = scimagojr.to_json(orient="split")
+		per_scimagojr = json.loads(per_scimagojr)
 
-	citiedby = pd.DataFrame(_citiedby)
-	citiedby = citiedby.sort_values(by=['citied'], ascending=False)
-	
-	per_citiedby = citiedby.to_json(orient="split")
-	per_citiedby = json.loads(per_citiedby)
+		citiedby = pd.DataFrame(_citiedby)
+		citiedby = citiedby.sort_values(by=['citied'], ascending=False)
+		
+		per_citiedby = citiedby.to_json(orient="split")
+		per_citiedby = json.loads(per_citiedby)
+	else:
+		per_scimagojr = {}
+		per_citiedby = {}
+
+	##DATA PERKEYWORD
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+	all_category_data = []
+	for _ in related_papers:
+		mykeyword = _[16].replace(" ,",",").replace(", ",",")
+		split_keyword = mykeyword.split(",")
+		for _mykeyword in split_keyword:
+			all_category_data.append(_mykeyword)
+	per_keyword = {i:all_category_data.count(i) for i in all_category_data}	
+	data_per_keyword = []
+	for _ in per_keyword:
+		temp = {}
+		temp['keyword'] = _
+		temp['value'] = per_keyword[_]
+		data_per_keyword.append(temp)
+
+	if(len(data_per_keyword) > 0):
+		data_per_keyword = pd.DataFrame(data_per_keyword)
+		data_per_keyword = data_per_keyword.sort_values(by=['value'], ascending=False)
+		
+		data_per_keyword = data_per_keyword.to_json(orient="split")
+		data_per_keyword = json.loads(data_per_keyword)
+	else:
+		data_per_keyword = {}
+
+
+	##DATA PER AUTHOR
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+	all_category_data_author = []
+	# print("get author name")
+	for _ in related_papers:
+		myauthor = _[4].replace(" ;",";").replace("; ",";")
+		# print(myauthor)
+		split_myauthor = myauthor.split(";")
+		for _myauthor in split_myauthor:
+			all_category_data_author.append(_myauthor)
+	# print("get author cat")
+	per_author = {i:all_category_data_author.count(i) for i in all_category_data_author}	
+	print(per_author)
+	data_per_author = []
+	for _ in per_author:
+		temp = {}
+		temp['author'] = _
+		temp['value'] = per_author[_]
+		data_per_author.append(temp)
+	# print("get per data author")
+	# print(data_per_author)
+	if(len(data_per_author) > 0):
+		data_per_author = pd.DataFrame(data_per_author)
+		data_per_author = data_per_author.sort_values(by=['value'], ascending=False)
+		
+		data_per_author = data_per_author.to_json(orient="split")
+		data_per_author = json.loads(data_per_author)
+	else:
+		# print("tidak ada data")
+		data_per_author = {}
 
 	this_output = {}
 	this_output['result_keyword'] = result_keyword
@@ -832,14 +1065,97 @@ def literature_review_slr_result_crawling():
 	this_output['per_year'] = per_years
 	this_output['per_publisher'] = per_publisher
 	this_output['per_journal'] = _publisher
-	this_output['per_scimagojr'] = json.loads(per_scimagojr)
+	this_output['per_scimagojr'] = per_scimagojr
 	this_output['per_citiedby'] = per_citiedby
+	this_output['per_keyword'] = data_per_keyword
+	this_output['per_author'] = data_per_author
 	
+
 	# END HERE
 	cur.execute('UPDATE research_slr SET summary=%s WHERE id=%s',[json.dumps(this_output),id])
 	conn.commit()
 
 	return Response(json.dumps(this_output),status=200, mimetype='application/json')
+
+
+@app.route('/literature_review/slr/generate_research',methods = ['POST'])
+@cross_origin()
+def literature_review_generate_research():
+
+	"""
+	text_header => <h2><strong>Implementation Big Data For National Security and Intelligence Agency</strong></h2><hr />
+	text_author => <p><strong>Author:</strong></p><p>Rizqy Rionaldy</p><hr />
+	text_abstract => <p><strong>Abstract:</strong></p><p>&nbsp;</p><hr />
+	text_introduction => <p><strong>Introduction:</strong></p><p>&nbsp;</p><hr />
+	text_literature => <p><strong>Literature Review:</strong></p><p>&nbsp;</p><hr />
+	text_methods => <p><strong>Research Methods:</strong></p><p>&nbsp;</p><hr />
+	text_result => <p><strong>Result:</strong></p><p>&nbsp;</p><hr />
+	text_discussion => <p><strong>Discussion:</strong></p><p>&nbsp;</p><hr />
+	text_conclusion => <p><strong>Conclusion:</strong></p><p>&nbsp;</p><hr />
+	text_references => <p><strong>References:</strong></p><p>&nbsp;</p>
+	text_paper => all
+	"""
+	
+	output = {}
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['research_id']
+	cur.execute("select * from research_slr where id="+id)
+	research_slr = cur.fetchone()
+
+	text_header = "<h2><strong>"+research_slr[1]+"</strong></h2><hr />"
+	text_author = "<p><strong>Author:</strong></p><p>"+research_slr[2]+"</p><hr />"
+	text_abstract = "<p><strong>Abstract:</strong></p><p>&nbsp;</p><hr />"
+
+	##############
+	#INTRODUCTION#
+	##############
+	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='introduction'")
+	paragraph_tb_introduction = cur.fetchone()
+	paragraph_tb_introduction = json.loads(paragraph_tb_introduction[0])
+	text_introduction = "<p><strong>Introduction:</strong></p><p>"
+	for _per in paragraph_tb_introduction:
+		text_introduction = text_introduction + str(paragraph_tb_introduction[_per])
+	text_introduction = text_introduction+"</p><hr />"
+
+
+	##############
+	#LITERATURE#
+	##############
+	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='literature'")
+	paragraph_tb_literature = cur.fetchone()
+	paragraph_tb_literature = json.loads(paragraph_tb_literature[0])
+	text_literature = "<p><strong>Literature Review:</strong></p><p>"
+	for _per in paragraph_tb_literature:
+		text_literature = text_literature + str(paragraph_tb_literature[_per])
+	text_literature = text_literature+"</p><hr />"
+
+
+	##############
+	#METHODS#
+	##############
+	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='methodology'")
+	paragraph_tb_methodology = cur.fetchone()
+	paragraph_tb_methodology = json.loads(paragraph_tb_methodology[0])
+	text_methodology = "<p><strong>Research Methods:</strong></p><p>"
+	for _per in paragraph_tb_methodology:
+		text_methodology = text_methodology + str(paragraph_tb_methodology[_per])
+	text_methodology = text_methodology+"</p><hr />"
+
+
+
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+
+	## UPDATE DATABASE
+	text_paper = text_header+text_author+text_abstract+text_introduction+text_literature+text_methodology
+	cur.execute('UPDATE research_slr SET output=%s WHERE id=%s',[text_paper,id])
+	conn.commit()
+	
+	return Response(json.dumps(research_slr),status=200, mimetype='application/json')
+
+	## START HERE
 
 
 

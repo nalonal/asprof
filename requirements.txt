@@ -15,3 +15,8 @@ lxml
 stem
 fake_useragent
 pandas
+matplotlib
+seaborn
+networkx
+mpld3
+bibtexparser

@@ -1,0 +1,7 @@
+    cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='methodology'")
+	paragraph_tb_methodology = cur.fetchone()
+	paragraph_tb_methodology = json.loads(paragraph_tb_methodology[0])
+	text_methodology = "<p><strong>methodology Review:</strong></p><p>"
+	for _per in paragraph_tb_methodology:
+		text_methodology = text_methodology + str(paragraph_tb_methodology[_per])
+	text_methodology = text_methodology+"</p><hr />"

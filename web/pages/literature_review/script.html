@@ -39,7 +39,30 @@ $(document).ready(function(){
 			{
 			}
 		});
-		// alert(paper_keyword)
+		// alert(keyword)
+	});
+
+	$(document).on("click",'.eliminate-review',function(){
+		var row_to_close = $(this).closest('li')
+		slr_id = $(this).closest('li').find('input').val()
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/slr/eliminated',
+			data: JSON.stringify({'slr_id':slr_id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				row_to_close.remove()
+				// location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+		// alert(slr_id)
 	});
 
 
@@ -115,16 +138,20 @@ $(document).ready(function(){
   });
 
 
-  $("#save_research_information").click(function(){
 
+  $("#save_research_information").click(function(){
   	var id = $("#input_research_id"). val();
   	var research_title = $("#input_research_title"). val();
 	var research_author = $("#input_research_author"). val();
+
+	var research_question = $("#input_research_question"). val();
+  	var research_identification = $("#input_research_identification"). val();
+	var research_question_list_template = $("#input_research_question_list_template"). val();
 	
 	$.ajax({
 		type: "POST",
 		url: root+'/literature_review/update',
-		data: JSON.stringify({'id':id,'research_title':research_title,'research_author':research_author}),
+		data: JSON.stringify({'id':id,'research_title':research_title,'research_author':research_author,'research_question':research_question,'research_identification':research_identification,'research_question_list_template':research_question_list_template}),
 		dataType: 'json',
 		headers: {
 			'Content-Type': 'application/json'
@@ -140,33 +167,30 @@ $(document).ready(function(){
 
   });
 
+  $("#output_save_research").click(function(){
+  	var id = $("#input_research_id"). val();
+	var research_text = CKEDITOR.instances['text'].getData();
+	$('.float-message-wait').show();
+	$.ajax({
+		type: "POST",
+		url: root+'/literature_review/update/output',
+		data: JSON.stringify({'id':id,'output':research_text}),
+		dataType: 'json',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		success: function(output)
+		{
+			$('.float-message-wait').hide();
+			$('.float-message-success').show();
+		},
+		error: function (data)
+		{
+		}
+	});
 
-//   $("#save_research_map").click(function(){
-// 		layoutAll()
-// 		var id = $("#input_research_id"). val();
-// 		var research_introduction = $("#input_research_introduction"). val();
-// 		var research_literature = $("#input_research_literature"). val();
-// 		var research_methodology = $("#input_research_methodology"). val();
-// 		var research_keyword = $("#input_research_keyword"). val();
+  });
 
-// 		$.ajax({
-// 		type: "POST",
-// 		url: root+'/literature_review/update_map',
-// 		data: JSON.stringify({'id':id,'research_introduction':research_introduction, 'research_literature':research_literature,'research_methodology':research_methodology, 'research_keyword':research_keyword}),
-// 		dataType: 'json',
-// 		headers: {
-// 			'Content-Type': 'application/json'
-// 		},
-// 		success: function(output)
-// 		{
-// 			location.reload();
-// 		},
-// 		error: function (data)
-// 		{
-// 		}
-// 		});
-
-// 		});
 
 	$("#save_research_remove").click(function(){
 		var id = $("#input_research_id"). val();
@@ -341,6 +365,33 @@ $(document).ready(function(){
 
 	});
 
+	$("#output_generate_research").click(function(){
+		var id = $("#input_research_id"). val();
+		// var research_keyword= $("#input_research_keyword"). val();
+		$('.float-message-wait').show();
+		$.ajax({
+			type: "POST",
+			url: root+'/literature_review/slr/generate_research',
+			data: JSON.stringify({'research_id':id}),
+			dataType: 'json',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			success: function(output)
+			{
+				$('.float-message-wait').hide();
+				$('.float-message-success').show();
+				setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+				location.reload();
+			},
+			error: function (data)
+			{
+			}
+		});
+
+	});
+
 
 });
+
 </script>

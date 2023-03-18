@@ -23,6 +23,31 @@
                     <label for="to" class="col-form-label">Author</label>
                     <input type="text" class="form-control" id="input_research_author" placeholder="Research Author" value="{{ output['data'][2] }}">
                   </div>
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">Research Question</label>
+                    <textarea class="form-control" id="input_research_question" rows="5">{{ output['data'][12] }}</textarea>
+                  </div>
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">Research Word Identification</label>
+                    <textarea class="form-control" id="input_research_identification" rows="5">{{ output['data'][13] }}</textarea>
+                  </div>
+                  
+                  <div class="form-row mb-3">
+                    <label for="to" class="col-form-label">Review Question List Template</label>
+                    <textarea class="form-control" id="input_research_question_list_template" rows="5">{{ output['data'][14] if(output['data'][14] is not none) else '---------------------------------------------------------
+                      Research Background
+                      ---------------------------------------------------------
+                                                
+                      ---------------------------------------------------------
+                      Research Purpose
+                      ---------------------------------------------------------
+                                                
+                      ---------------------------------------------------------
+                      Research Goals
+                      ---------------------------------------------------------
+                      
+                      ' }}</textarea>
+                  </div>
                  <div class="form-group">
                   <button id="save_research_information" class="btn btn-success">Save Research Information</button>
                   <button id="save_research_remove" class="btn btn-danger">Remove Project Research</button>

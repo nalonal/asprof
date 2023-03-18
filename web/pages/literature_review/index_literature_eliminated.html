@@ -17,8 +17,8 @@
               <nav class="nav nav-tabs">
                 <a class="nav-link" href="{{ url_for('literature_review_lr_related', id=id) }}">Selected Paper Review ({{output['relevant']}})</a>
                 <a class="nav-link" href="{{ url_for('literature_review_lr', id=id) }}">Uncategory Paper ({{ output['total_papers'] }})</a>
-                <a class="nav-link active" href="{{ url_for('literature_review_lr_unrelated', id=id) }}">Unrelated Paper ({{output['unrelevant']}})</a>
-                <a class="nav-link" href="{{ url_for('literature_review_lr_eliminated', id=id) }}">Eliminated Paper ({{output['eliminated']}})</a>
+                <a class="nav-link" href="{{ url_for('literature_review_lr_unrelated', id=id) }}">Unrelated Paper ({{output['unrelevant']}})</a>
+                <a class="nav-link active" href="{{ url_for('literature_review_lr_eliminated', id=id) }}">Eliminated Paper ({{output['eliminated']}})</a>
               </nav>
               <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
 
@@ -47,7 +47,7 @@
                         <input type="text" name="paper_keyword" class="form-control paper_keyword" id="paper_keyword" value="{{ paper[16] if(paper[16] is not none) else '' }}">
                         <br><p>Resume</p>
                         <textarea id="w3review" cols="200" rows="8" style="width:100%">{{ paper[15] if(paper[15] is not none) else output['data'][14] }}</textarea>
-                        <br><button class="btn-success save-review" style="margin-top: 5px;">Save Review</button>&nbsp;<button class="btn-danger eliminated" style="margin-top: 5px;">I Think This Paper Is Not Relevant After Full Reading</button> 
+                        <br><button class="btn-success save-review" style="margin-top: 5px;">Save Review</button>
                       </div> 
                     
                 </li>

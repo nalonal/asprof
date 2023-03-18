@@ -1,4 +1,10 @@
 
+<style>
+  table, th, td {
+    border:1px solid black;
+    color: black;
+  }
+</style>
 <div class="row">  
     <div class="col-md-12 col-sm-12 ">
       <div class="x_panel">
@@ -13,9 +19,10 @@
         <div class="email-app">
             {% include 'pages/literature_review/menu.html' %}
             <main>
-                <h2 style="color: black;">Research Output Editor<button id="output_generate_research" style="float:right" class="btn btn-success btn-sm">Generate Text From Research</button><button id="output_save_research" style="float:right" class="btn btn-info btn-sm">Save Research Result</button></h2><br>
+                <h2 style="color: black;">Writing Research<button id="output_generate_research" style="float:right" class="btn btn-success btn-sm">Generate Text From Research</button><button id="output_save_research" style="float:right" class="btn btn-info btn-sm">Save Research Result</button></h2><br>
+                <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
                 {{ ckeditor.load() }}
-                {{ ckeditor.create(name="text", value="insert text in here") }}
+                {{ ckeditor.create(name="text", value=output['data'][8]) }}
                 {{ ckeditor.config(name='text') }}
             </main>
         </div>
