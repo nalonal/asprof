@@ -54,8 +54,30 @@ from flask import Markup
 import sys
 import urllib.request
 from urllib.error import HTTPError
-
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+from io import BytesIO
+import base64
+import seaborn
 import bibtexparser
+import squarify
+
+import numpy as np
+from sklearn.cluster import KMeans
+import json
+
+def anti_ascii(input_array):
+        output = []
+        for _ in input_array:
+                if(isinstance(_, int)):
+                        stringout = _  
+                else:
+                        stringcode = _.encode("ascii", "ignore")
+                        stringout = stringcode.decode()
+                output.append(stringout)
+        return output
 
 def tor_requests(url):
         proxies = {
@@ -78,7 +100,17 @@ def get_citatied(input_keyword):
                         time.sleep(3)
                         soup=BeautifulSoup(response.content,'lxml')
                         soup = soup.select('[data-lid]')[0]
-                        break
+                        try:
+                                _ = soup.find_all("div", class_="gs_fl")[1]
+                        except:
+                                _ = soup.find_all("div", class_="gs_fl")[0]
+                        link = _.find_all("a")[2]
+                        final_link = link.text
+                        if final_link.find("Cited by") != -1:
+                                final_link = final_link.replace("Cited by ","")
+                        else:
+                                final_link = 0
+                        return final_link
                 except:
                         if(th > 5):
                                 print("Scholar Network Error")
@@ -87,22 +119,6 @@ def get_citatied(input_keyword):
                         else:
                                 th = th+1
                                 pass
-        try:
-                _ = soup.find_all("div", class_="gs_fl")[1]
-        except:
-                _ = soup.find_all("div", class_="gs_fl")[0]
-
-        try:
-                link = _.find_all("a")[2]
-                final_link = link.text
-                if final_link.find("Cited by") != -1:
-                        final_link = final_link.replace("Cited by ","")
-                else:
-                        final_link = 0
-                return final_link
-        except:
-                print("Scholar Crawling Element Error")
-                return "Error"
 
 class GetOpenAPI(threading.Thread):
         def __init__(self, id):
@@ -132,7 +148,7 @@ class GetOpenAPI(threading.Thread):
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
         def request_ai(self, question):
-                openai.api_key = ''
+                openai.api_key = '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'
                 response = openai.Completion.create(
                         model="text-davinci-003",
                         prompt=question,
@@ -306,7 +322,10 @@ class GetLibrary(threading.Thread):
                         with urllib.request.urlopen(req) as f:
                                 bibtex = f.read().decode()
                         bib_database = bibtexparser.loads(bibtex)
-                        year = bib_database.entries[0]['year']
+                        try:
+                                year = bib_database.entries[0]['year']
+                        except:
+                                year = ""
                         return doi, bibtex, year
                 except HTTPError as e:
                         if e.code == 404:
@@ -315,22 +334,30 @@ class GetLibrary(threading.Thread):
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
         def get_doi2bibtex(self,doi):
-                BASE_URL = 'http://dx.doi.org/'
-                url = BASE_URL + doi
-                req = urllib.request.Request(url)
-                req.add_header('Accept', 'application/x-bibtex')
-                try:
-                        with urllib.request.urlopen(req) as f:
-                                bibtex = f.read().decode()
-                        bib_database = bibtexparser.loads(bibtex)
-                        year = bib_database.entries[0]['year']
-                        # print(year)
-                        return bibtex, year
-                except HTTPError as e:
-                        if e.code == 404:
-                                return 'DOI not found.', ''
-                        else:
-                                return 'Service unavailable.',''
+                th = 0
+                while th < 5:
+                        BASE_URL = 'http://dx.doi.org/'
+                        url = BASE_URL + doi
+                        try:
+                                req = urllib.request.Request(url)
+                                req.add_header('Accept', 'application/x-bibtex')
+                                with urllib.request.urlopen(req) as f:
+                                        bibtex = f.read().decode()
+                                bib_database = bibtexparser.loads(bibtex)
+                                try:
+                                        year = bib_database.entries[0]['year']
+                                except:
+                                        year = ""
+                                # print(year)
+                                return bibtex, year
+                        except HTTPError as e:
+                                if(th<5):
+                                        th = th+1
+                                else:
+                                        if e.code == 404:
+                                                return 'DOI not found.', ''
+                                        else:
+                                                return 'Service unavailable.',''
 
         def get_bibtex(self):
                 research_id = self.id
@@ -340,13 +367,26 @@ class GetLibrary(threading.Thread):
                         title = _[2] 
                         doi = _[9]
                         if(doi != ''):
-                                bibtex, year= self.get_doi2bibtex(doi)
-                                self.cur.execute('UPDATE slr_tb SET bibtex=%s, year=%s WHERE id=%s',[bibtex,year,id])
-                                self.conn.commit()
+                                try:
+                                        bibtex, year= self.get_doi2bibtex(doi)
+                                        if(year != ""):
+                                                self.cur.execute('UPDATE slr_tb SET bibtex=%s, year=%s WHERE id=%s',[bibtex,year,id])
+                                                self.conn.commit()
+                                        else:
+                                                self.cur.execute('UPDATE slr_tb SET bibtex=%s WHERE id=%s',[bibtex,id])
+                                                self.conn.commit()
+                                except:
+                                        self.cur.execute('UPDATE slr_tb SET bibtex=%s WHERE id=%s',[bibtex,id])
+                                        self.conn.commit()
+
                         else:
                                 doi, bibtex, year = self.doi_file(title)
-                                self.cur.execute('UPDATE slr_tb SET doi=%s, bibtex=%s, year=% WHERE id=%s',[doi, bibtex,year,id])
-                                self.conn.commit()
+                                if(year != ""):
+                                        self.cur.execute('UPDATE slr_tb SET doi=%s, bibtex=%s, year=%s WHERE id=%s',[doi, bibtex,year,id])
+                                        self.conn.commit()
+                                else:
+                                        self.cur.execute('UPDATE slr_tb SET doi=%s, bibtex=%s WHERE id=%s',[doi, bibtex,id])
+                                        self.conn.commit()
         
         def remove_duplicate(self):
                 research_id = self.id
@@ -382,25 +422,26 @@ class GetLibrary(threading.Thread):
                 data_total_process_references = self.cur.fetchall()
                 for _ in data_total_process_references:
                         this_id = _[0]
-                        self.driver.get(_[3]+"keywords") 
-                        time.sleep(10)
-                        try:
-                                abstract = self.driver.find_element(By.CLASS_NAME,"abstract-text").text.replace("Abstract:\n","")
-                        except:
-                                abstract = ""
-                        try:
-                                doi = self.driver.find_element(By.CLASS_NAME,"stats-document-abstract-doi").text.replace("DOI: ","")
-                        except:
-                                doi = ""
-                        try:
-                                abstract_keyword = self.driver.find_elements(By.CLASS_NAME,"doc-keywords-list-item")[-1].text.split("Author Keywords")[1].replace("\n","")
-                                abstract_keyword = abstract_keyword.lower()
-                        except:
-                                abstract_keyword = ""
-                        strencode = abstract.encode("ascii", "ignore")
-                        abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s, keyword=%s WHERE id=%s',[abstract, doi, "finished", abstract_keyword, this_id])
-                        self.conn.commit()
+                        if(_[3] != ""):
+                                self.driver.get(_[3]+"keywords") 
+                                time.sleep(10)
+                                try:
+                                        abstract = self.driver.find_element(By.CLASS_NAME,"abstract-text").text.replace("Abstract:\n","")
+                                except:
+                                        abstract = ""
+                                try:
+                                        doi = self.driver.find_element(By.CLASS_NAME,"stats-document-abstract-doi").text.replace("DOI: ","")
+                                except:
+                                        doi = ""
+                                try:
+                                        abstract_keyword = self.driver.find_elements(By.CLASS_NAME,"doc-keywords-list-item")[-1].text.split("Author Keywords")[1].replace("\n","")
+                                        abstract_keyword = abstract_keyword.lower()
+                                except:
+                                        abstract_keyword = ""
+                                strencode = abstract.encode("ascii", "ignore")
+                                abstract = strencode.decode()
+                                self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s, keyword=%s WHERE id=%s',anti_ascii([abstract, doi, "finished", abstract_keyword, this_id]))
+                                self.conn.commit()
 
         def sciencedirect_crawling(self):
                 research_id = self.id
@@ -408,30 +449,32 @@ class GetLibrary(threading.Thread):
                 data_total_process_references = self.cur.fetchall()
                 for _ in data_total_process_references:
                         this_id = _[0]
-                        self.driver.get(_[3])
-                        time.sleep(10)
-                        try:
-                                abstract = self.driver.find_element(By.CLASS_NAME,"abstract").text.replace("Abstract\n","")
-                        except:
-                                abstract = ""
-                        try:
-                                doi = self.driver.find_element(By.CLASS_NAME,"doi").text.replace("https://doi.org/","")
-                        except:
-                                doi = ""
-                
-                        key = []
-                        try:
-                                for mykey in self.driver.find_elements(By.CLASS_NAME,"keyword"):
-                                        key.append(mykey.text)
-                                abstract_keyword = ",".join(key)
-                                abstract_keyword = abstract_keyword.lower()
-                        except:
-                                abstract_keyword = ""
-                        strencode = abstract.encode("ascii", "ignore")
-                        abstract = strencode.decode()
-                        print(abstract_keyword)
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s, keyword=%s WHERE id=%s',[abstract, doi, "finished", abstract_keyword, this_id])
-                        self.conn.commit()
+                        if(_[3] != ""):
+                                self.driver.get(_[3])
+                                time.sleep(10)
+                                try:
+                                        abstract = self.driver.find_element(By.CLASS_NAME,"abstract").text.replace("Abstract\n","")
+                                except:
+                                        abstract = ""
+                                try:
+                                        doi = self.driver.find_element(By.CLASS_NAME,"doi").text.replace("https://doi.org/","")
+                                except:
+                                        doi = ""
+                        
+                                key = []
+                                try:
+                                        for mykey in self.driver.find_elements(By.CLASS_NAME,"keyword"):
+                                                key.append(mykey.text)
+                                        abstract_keyword = ",".join(key)
+                                        abstract_keyword = abstract_keyword.lower()
+                                except:
+                                        abstract_keyword = ""
+                                strencode = abstract.encode("ascii", "ignore")
+                                abstract = strencode.decode()
+                                print(abstract_keyword)
+                                self.cur.execute('UPDATE slr_tb SET abstract=%s, doi=%s, status=%s, keyword=%s WHERE id=%s',anti_ascii([abstract, doi, "finished", abstract_keyword, this_id]))
+                                self.conn.commit()
+        
         
         def acm_crawling(self):
                 research_id = self.id
@@ -439,26 +482,27 @@ class GetLibrary(threading.Thread):
                 data_total_process_references = self.cur.fetchall()
                 for _ in data_total_process_references:
                         this_id = _[0]
-                        self.driver.get(_[3])
-                        time.sleep(10)
-                        try:
-                                abstract = self.driver.find_element(By.CLASS_NAME,"abstractInFull").text
-                        except:
-                                abstract = ""
-                        try:
-                                authors = self.driver.find_elements(By.CLASS_NAME,"loa__author-name")
-                                this_author = [per_authors.text for per_authors in authors]
-                                author = "; ".join(this_author)
-                        except:
-                                author = ""
-                        try:
-                                doi = self.driver.find_element(By.CLASS_NAME,"issue-item__detail").find_elements(By.TAG_NAME,"span")[-1].text.replace("https://doi.org/","")
-                        except:
-                                doi = "None"
-                        strencode = abstract.encode("ascii", "ignore")
-                        abstract = strencode.decode()
-                        self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s, doi=%s WHERE id=%s',[abstract, author, "finished", doi, this_id])
-                        self.conn.commit()
+                        if(_[3] != ""):
+                                self.driver.get(_[3])
+                                time.sleep(10)
+                                try:
+                                        abstract = self.driver.find_element(By.CLASS_NAME,"abstractInFull").text
+                                except:
+                                        abstract = ""
+                                try:
+                                        authors = self.driver.find_elements(By.CLASS_NAME,"loa__author-name")
+                                        this_author = [per_authors.text for per_authors in authors]
+                                        author = "; ".join(this_author)
+                                except:
+                                        author = ""
+                                try:
+                                        doi = self.driver.find_element(By.CLASS_NAME,"issue-item__detail").find_elements(By.TAG_NAME,"span")[-1].text.replace("https://doi.org/","")
+                                except:
+                                        doi = "None"
+                                strencode = abstract.encode("ascii", "ignore")
+                                abstract = strencode.decode()
+                                self.cur.execute('UPDATE slr_tb SET abstract=%s, author=%s, status=%s, doi=%s WHERE id=%s',anti_ascii([abstract, author, "finished", doi, this_id]))
+                                self.conn.commit()
                 
                 
         def acm(self, keyword_search):
@@ -482,8 +526,14 @@ class GetLibrary(threading.Thread):
                         this_element =self.driver.find_elements(By.CLASS_NAME, "search__item")
                         for per_this_element in this_element:
                                 output_search = {}
-                                title = per_this_element.find_element(By.CLASS_NAME,"issue-item__title").text
-                                link = per_this_element.find_element(By.CLASS_NAME,"issue-item__title").find_element(By.TAG_NAME,"a").get_attribute('href')
+                                try:
+                                        title = per_this_element.find_element(By.CLASS_NAME,"issue-item__title").text
+                                except:
+                                        title = ""
+                                try:
+                                        link = per_this_element.find_element(By.CLASS_NAME,"issue-item__title").find_element(By.TAG_NAME,"a").get_attribute('href')
+                                except:
+                                        link = ""
                                 try:
                                         author = per_this_element.find_element(By.CLASS_NAME,"truncate-list").text.replace(",",";")
                                 except:
@@ -508,7 +558,7 @@ class GetLibrary(threading.Thread):
 
                                 publish_name = event
                                 citation = get_citatied(title)
-                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "ACM Digital Library",citation])
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",anti_ascii([research_id,title,link,author,event,year,publish_type, publish_name, "ACM Digital Library",citation]))
                                 self.conn.commit()
 
 
@@ -534,8 +584,14 @@ class GetLibrary(threading.Thread):
                         this_element = self.driver.find_elements(By.CLASS_NAME, "ResultItem")
                         for per_this_element in this_element:
                                 output_search = {}
-                                title = per_this_element.find_element(By.CLASS_NAME,"result-list-title-link").text
-                                link = per_this_element.find_element(By.TAG_NAME,"a").get_attribute('href')
+                                try:
+                                        title = per_this_element.find_element(By.CLASS_NAME,"result-list-title-link").text
+                                except:
+                                        title = ""
+                                try:
+                                        link = per_this_element.find_element(By.TAG_NAME,"a").get_attribute('href')
+                                except:
+                                        link = ""
                                 try:
                                         author = [name_author.text for name_author in per_this_element.find_elements(By.CLASS_NAME,"author")]
                                         author = "; ".join(author)
@@ -557,7 +613,7 @@ class GetLibrary(threading.Thread):
                                 
                                 publish_name = event
                                 citation = get_citatied(title)
-                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "Sciencedirect", citation])
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",anti_ascii([research_id,title,link,author,event,year,publish_type, publish_name, "Sciencedirect", citation]))
                                 self.conn.commit()
 
 
@@ -588,8 +644,14 @@ class GetLibrary(threading.Thread):
                         this_element =self.driver.find_elements(By.CLASS_NAME, "List-results-items")
                         for per_this_element in this_element:
                                 output_search = {}
-                                title = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].text
-                                link = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].find_element(By.TAG_NAME,"a").get_attribute('href')
+                                try:
+                                        title = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].text
+                                except:
+                                        title = ""
+                                try:
+                                        link = per_this_element.find_elements(By.CLASS_NAME,"text-md-md-lh")[0].find_element(By.TAG_NAME,"a").get_attribute('href')
+                                except:
+                                        link = ""
                                 try:
                                         author = per_this_element.find_element(By.CLASS_NAME,"author").text.replace("\n"," ")
                                 except:
@@ -611,7 +673,7 @@ class GetLibrary(threading.Thread):
                                         publish_type = "None"
                                         publish_name = "None"
                                 citation = get_citatied(title)
-                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[research_id,title,link,author,event,year,publish_type, publish_name, "IEEE", citation])
+                                self.cur.execute("INSERT INTO slr_tb(research_id, title,link,author,event, year, publish_type, publish_name, source, citation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",anti_ascii([research_id,title,link,author,event,year,publish_type, publish_name, "IEEE", citation]))
                                 self.conn.commit()
 
 

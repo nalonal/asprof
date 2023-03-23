@@ -5,15 +5,18 @@
     {% include 'template/script.html' %}
     <title>{{ title }}</title>
   </head>
-  <body class="nav-md">
+  <body class="nav-md" style="background: white;">
     <div class="container body">
-      <div class="main_container">
-        {% include 'template/sidebar.html' %}
+      <div class="main_container">  
+         
         {% include 'template/navbar.html' %}
-        <div class="right_col" role="main" style="min-height: 100% !important">  
+        <div class="row">
+        <div class="col-md-12" role="main" style="min-height: 100% !important"> 
+          <img src="{{ url_for('static', filename='assets/images/sharingan2.png') }}"><span style="font-size: 18px">Assistant Professor</span></a> 
           {% include 'pages/'+page+'/'+view_file+'.html' %}
           <div class="clearfix"></div>
         </div>
+      </div>
         {% include 'template/footer.html' %}
       </div>
     </div>

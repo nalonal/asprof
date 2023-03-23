@@ -20,3 +20,5 @@ sudo sh -c 'echo "CookieAuthentication 1" >> /etc/tor/torrc'
 sudo sh -c 'echo "$(echo "HashedControlPassword ")$(sudo tor --hash-password asprof | tail -n1)" >> /etc/tor/torrc'
 sudo service tor restart
 docker compose up -d
+wget https://dl.minio.io/server/minio/release/linux-amd64/minio
+chmod +x minio

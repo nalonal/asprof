@@ -1,16 +1,16 @@
 from app import *
 
-@app.route('/')
-def route_file():
-	title = 'Indonesia Issue Crawler'
-	return render_template(setup.PATH_TEMPLATE, title=title, page='beranda', view_file='index')
+# @app.route('/')
+# def route_file():
+# 	title = 'Indonesia Issue Crawler'
+# 	return render_template(setup.PATH_TEMPLATE, title=title, page='beranda', view_file='index')
 
 @app.route('/login')
 def login_page():
 	title = 'Halaman Login Pengguna'
 	return render_template(setup.PATH_TEMPLATE_LOGIN, title=title)
 
-@app.route('/literature_review')
+@app.route('/')
 def literature_review():
 	output = {}
 	conn = dbcon()
@@ -449,12 +449,77 @@ def literature_review_rr(id):
 	conn = dbcon()
 	title = 'Systematic Literature Review'
 	# conn.row_factory = sql.Row
+
 	cur = conn.cursor(buffered=True)
 	cur.execute("select * from research_slr where id="+id)
 	data = cur.fetchone()
 	output['data'] = data
-	if(data[11]):
+	if(data[11]):	
 		output['research'] = json.loads(data[11])
+		cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+		related_papers = cur.fetchall()
+		json_category_data = []
+		for _ in related_papers:
+			mykeyword = _[16].replace(" ,",",").replace(", ",",")
+			split_keyword = mykeyword.split(",")
+			for _mykeyword in split_keyword:
+				for __ in split_keyword:
+					if(_mykeyword != __):
+						# json_category_data = json_category_data + '{ from:"'+ _mykeyword +'", to: "'+__+'"},'
+						json_category_data.append([_mykeyword,__])
+
+		edges = json_category_data
+
+		# Create empty nodes and connections dictionaries
+		nodes = {}
+		connections = {}
+
+		# Loop through the edges and add unique nodes and connections
+		# Loop through the edges and add unique nodes and connections
+		for edge in edges:
+			# Check if the from node is the same as the to node
+			if edge[0] == edge[1]:
+				continue  # Skip this edge and move on to the next one
+
+			# Check if the from node already exists
+			if edge[0] not in nodes:
+				nodes[edge[0]] = {'id': edge[0], 'label': edge[0], 'value': 1}
+			else:
+				nodes[edge[0]]['value'] += 1
+
+			# Check if the to node already exists
+			if edge[1] not in nodes:
+				nodes[edge[1]] = {'id': edge[1], 'label': edge[1], 'value': 1}
+			else:
+				nodes[edge[1]]['value'] += 1
+
+			# Increment the connection count if the connection exists for both from and to nodes
+			if edge[0] in connections and edge[1] in connections:
+				connections[edge[0]] += 1
+				connections[edge[1]] += 1
+			else:
+				connections[edge[0]] = 1
+				connections[edge[1]] = 1
+
+		# Convert nodes dictionary to a list of dictionaries
+		nodes_list = list(nodes.values())
+
+		# Use k-means clustering to cluster the nodes based on their connections
+		cluster_count = 5  # set the number of clusters
+		nodes_matrix = np.array([[node['value']] for node in nodes_list])
+		kmeans = KMeans(n_clusters=cluster_count, random_state=0).fit(nodes_matrix)
+		clusters = kmeans.labels_
+
+		# Assign a cluster ID to each node
+		for i in range(len(nodes_list)):
+			nodes_list[i]['group'] = clusters[i]
+
+		# Convert nodes and edges data to JSON
+		nodes_data = json.dumps(nodes_list, default=str)
+		edges_data = json.dumps([{'from': edge[0], 'to': edge[1]} for edge in edges])
+
+		output['research']['nodes_data'] = Markup(nodes_data)
+		output['research']['edges_data'] = Markup(edges_data)
 
 	else:
 		output['research'] = data[11]
@@ -1004,11 +1069,17 @@ def literature_review_slr_result_crawling():
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
 	all_category_data = []
+	json_category_data = ""
 	for _ in related_papers:
 		mykeyword = _[16].replace(" ,",",").replace(", ",",")
 		split_keyword = mykeyword.split(",")
 		for _mykeyword in split_keyword:
 			all_category_data.append(_mykeyword)
+			# for __ in split_keyword:
+			# 	if(all_category_data != __):
+			# 		json_category_data = json_category_data + '{ from:"'+ all_category_data +'", to: "'+__+'"},'
+
+
 	per_keyword = {i:all_category_data.count(i) for i in all_category_data}	
 	data_per_keyword = []
 	for _ in per_keyword:
@@ -1156,6 +1227,350 @@ def literature_review_generate_research():
 	return Response(json.dumps(research_slr),status=200, mimetype='application/json')
 
 	## START HERE
+
+@app.route('/literature_review/<id>/bb')
+def literature_review_bb(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+	if(data[11]):	
+		output['research'] = {}
+		cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+		related_papers = cur.fetchall()
+		json_category_data = []
+		for _ in related_papers:
+			mykeyword = _[16].replace(" ,",",").replace(", ",",")
+			split_keyword = mykeyword.split(",")
+			for _mykeyword in split_keyword:
+				for __ in split_keyword:
+					if(_mykeyword != __):
+						# json_category_data = json_category_data + '{ from:"'+ _mykeyword +'", to: "'+__+'"},'
+						json_category_data.append([_mykeyword,__])
+
+		edges = json_category_data
+
+		# Create empty nodes and connections dictionaries
+		nodes = {}
+		connections = {}
+
+		# Loop through the edges and add unique nodes and connections
+		# Loop through the edges and add unique nodes and connections
+		for edge in edges:
+			# Check if the from node is the same as the to node
+			if edge[0] == edge[1]:
+				continue  # Skip this edge and move on to the next one
+
+			# Check if the from node already exists
+			if edge[0] not in nodes:
+				nodes[edge[0]] = {'id': edge[0], 'label': edge[0], 'value': 1}
+			else:
+				nodes[edge[0]]['value'] += 1
+
+			# Check if the to node already exists
+			if edge[1] not in nodes:
+				nodes[edge[1]] = {'id': edge[1], 'label': edge[1], 'value': 1}
+			else:
+				nodes[edge[1]]['value'] += 1
+
+			# Increment the connection count if the connection exists for both from and to nodes
+			if edge[0] in connections and edge[1] in connections:
+				connections[edge[0]] += 1
+				connections[edge[1]] += 1
+			else:
+				connections[edge[0]] = 1
+				connections[edge[1]] = 1
+
+		# Convert nodes dictionary to a list of dictionaries
+		nodes_list = list(nodes.values())
+
+		# Use k-means clustering to cluster the nodes based on their connections
+		cluster_count = 5  # set the number of clusters
+		nodes_matrix = np.array([[node['value']] for node in nodes_list])
+		kmeans = KMeans(n_clusters=cluster_count, random_state=0).fit(nodes_matrix)
+		clusters = kmeans.labels_
+
+		# Assign a cluster ID to each node
+		for i in range(len(nodes_list)):
+			nodes_list[i]['group'] = clusters[i]
+
+		# Convert nodes and edges data to JSON
+		nodes_data = json.dumps(nodes_list, default=str)
+		edges_data = json.dumps([{'from': edge[0], 'to': edge[1]} for edge in edges])
+
+		output['research']['nodes_data'] = Markup(nodes_data)
+		output['research']['edges_data'] = Markup(edges_data)
+
+	else:
+		output['research'] = data[11]
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_bibliometric_keyword', output = output)	
+
+
+
+@app.route('/literature_review/<id>/bb_resume')
+def literature_review_bb_resume(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+	if(data[11]):	
+		output['research'] = {}
+		cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+		related_papers = cur.fetchall()
+		json_category_data = []
+		for _ in related_papers:
+			mykeyword = _[4].replace(" ;",";").replace("; ",";")
+			split_keyword = mykeyword.split(";")
+			for _mykeyword in split_keyword:
+				for __ in split_keyword:
+					if(_mykeyword != __):
+						# json_category_data = json_category_data + '{ from:"'+ _mykeyword +'", to: "'+__+'"},'
+						json_category_data.append([_mykeyword,__])
+
+		edges = json_category_data
+
+		# Create empty nodes and connections dictionaries
+		nodes = {}
+		connections = {}
+
+		# Loop through the edges and add unique nodes and connections
+		# Loop through the edges and add unique nodes and connections
+		for edge in edges:
+			# Check if the from node is the same as the to node
+			if edge[0] == edge[1]:
+				continue  # Skip this edge and move on to the next one
+
+			# Check if the from node already exists
+			if edge[0] not in nodes:
+				nodes[edge[0]] = {'id': edge[0], 'label': edge[0], 'value': 1}
+			else:
+				nodes[edge[0]]['value'] += 1
+
+			# Check if the to node already exists
+			if edge[1] not in nodes:
+				nodes[edge[1]] = {'id': edge[1], 'label': edge[1], 'value': 1}
+			else:
+				nodes[edge[1]]['value'] += 1
+
+			# Increment the connection count if the connection exists for both from and to nodes
+			if edge[0] in connections and edge[1] in connections:
+				connections[edge[0]] += 1
+				connections[edge[1]] += 1
+			else:
+				connections[edge[0]] = 1
+				connections[edge[1]] = 1
+
+		# Convert nodes dictionary to a list of dictionaries
+		nodes_list = list(nodes.values())
+
+		# Use k-means clustering to cluster the nodes based on their connections
+		cluster_count = 5  # set the number of clusters
+		nodes_matrix = np.array([[node['value']] for node in nodes_list])
+		kmeans = KMeans(n_clusters=cluster_count, random_state=0).fit(nodes_matrix)
+		clusters = kmeans.labels_
+
+		# Assign a cluster ID to each node
+		for i in range(len(nodes_list)):
+			nodes_list[i]['group'] = clusters[i]
+
+		# Convert nodes and edges data to JSON
+		nodes_data = json.dumps(nodes_list, default=str)
+		edges_data = json.dumps([{'from': edge[0], 'to': edge[1]} for edge in edges])
+
+		output['research']['nodes_data'] = Markup(nodes_data)
+		output['research']['edges_data'] = Markup(edges_data)
+
+		
+		# BAR CHART
+		barWidth = 0.25
+		fig, ax = plt.subplots(figsize=(8, 6))
+				
+		# set height of bar
+		IT = [12, 30, 1, 8, 22]
+		ECE = [28, 6, 16, 5, 10]
+		CSE = [29, 3, 24, 25, 17]
+				
+		# Set position of bar on X axis
+		br1 = np.arange(len(IT))
+		br2 = [x + barWidth for x in br1]
+		br3 = [x + barWidth for x in br2]
+				
+		# Make the plot
+		ax.bar(br1, IT, color='orange', width=barWidth, edgecolor='grey', label='IT')
+		ax.bar(br2, ECE, color='g', width=barWidth, edgecolor='grey', label='ECE')
+		ax.bar(br3, CSE, color='b', width=barWidth, edgecolor='grey', label='CSE')
+
+		# Adding label values
+		for i, v in enumerate(IT):
+			ax.text(i - 0.1, v + 0.5, str(v), color='black', fontweight='bold')
+		for i, v in enumerate(ECE):
+			ax.text(i + 0.15, v + 0.5, str(v), color='black', fontweight='bold')
+		for i, v in enumerate(CSE):
+			ax.text(i + 0.4, v + 0.5, str(v), color='black', fontweight='bold')
+				
+		# Adding Xticks
+		ax.set_xlabel('Branch', fontweight='bold', fontsize=15)
+		ax.set_ylabel('Students passed', fontweight='bold', fontsize=15)
+		ax.set_xticks([r + barWidth for r in range(len(IT))])
+		ax.set_xticklabels(['2015', '2016', '2017', '2018', '2019'])
+
+		ax.legend()
+
+		# Export the plot to HTML using mpld3
+		html_str = mpld3.fig_to_html(fig)
+		bar_chart = Markup(html_str)
+		output['research']['barplot'] = bar_chart
+
+		plt.clf()
+
+		# Create a pie chart
+		labels= ['Mortgage', 'Utilities', 'Food']
+		colors=['orange', 'green', 'blue']
+		sizes= [1500, 600, 500]
+
+		# Set default font size and style
+		plt.rcParams.update({'font.size': 16, 'font.family': 'serif'})
+
+		# Create pie chart with centered label text
+		plt.pie(sizes, labels=labels, colors=colors, startangle=90, autopct='%1.1f%%', textprops={'horizontalalignment':'center', 'verticalalignment':'center'})
+
+		plt.axis('equal')
+
+		html_str = mpld3.fig_to_html(plt.gcf())
+
+		pie_chart = Markup(html_str)
+		output['research']['piechart'] = pie_chart
+
+		# First treemap
+		plt.clf()
+		# Create a data frame with fake data
+		df1 = pd.DataFrame({'nb_people':[8, 5, 3, 2, 1], 'group':["Group A", "Group B", "Group C", "Group D", "Group E"] })
+
+		# plot it
+		squarify.plot(sizes=df1['nb_people'], label=df1['group'], alpha=.8 )
+		plt.axis('off')
+		html_str_1 = mpld3.fig_to_html(plt.gcf())
+		treemap_chart_1 = Markup(html_str_1)
+
+		# Second treemap
+		plt.clf()
+		# Create a data frame with fake data
+		df2 = pd.DataFrame({'nb_people':[10, 8, 5, 3, 1], 'group':["Group E", "Group C", "Group A", "Group B", "Group D"] })
+
+		# plot it
+		squarify.plot(sizes=df2['nb_people'], label=df2['group'], alpha=.8 )
+		plt.axis('off')
+		html_str_2 = mpld3.fig_to_html(plt.gcf())
+		treemap_chart_2 = Markup(html_str_2)
+
+		output['research']['author'] = treemap_chart_1
+		output['research']['keyword'] = treemap_chart_2
+
+		# Convert the figure to an SVG string
+		svg_io = io.StringIO()
+		mpld3.save_html(plt.gcf(), svg_io)
+		svg_string = svg_io.getvalue()
+		output['research']['keyword_string'] = svg_string
+
+	else:
+		output['research'] = data[11]
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_bibliometric_resume', output = output)	
+
+
+@app.route('/literature_review/<id>/bb_author')
+def literature_review_bb_author(id):
+	output = {}
+	id = id
+	conn = dbcon()
+	title = 'Systematic Literature Review'
+	# conn.row_factory = sql.Row
+
+	cur = conn.cursor(buffered=True)
+	cur.execute("select * from research_slr where id="+id)
+	data = cur.fetchone()
+	output['data'] = data
+	if(data[11]):	
+		output['research'] = {}
+		cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+		related_papers = cur.fetchall()
+		json_category_data = []
+		for _ in related_papers:
+			mykeyword = _[4].replace(" ;",";").replace("; ",";")
+			split_keyword = mykeyword.split(";")
+			for _mykeyword in split_keyword:
+				for __ in split_keyword:
+					if(_mykeyword != __):
+						# json_category_data = json_category_data + '{ from:"'+ _mykeyword +'", to: "'+__+'"},'
+						json_category_data.append([_mykeyword,__])
+
+		edges = json_category_data
+
+		# Create empty nodes and connections dictionaries
+		nodes = {}
+		connections = {}
+
+		# Loop through the edges and add unique nodes and connections
+		# Loop through the edges and add unique nodes and connections
+		for edge in edges:
+			# Check if the from node is the same as the to node
+			if edge[0] == edge[1]:
+				continue  # Skip this edge and move on to the next one
+
+			# Check if the from node already exists
+			if edge[0] not in nodes:
+				nodes[edge[0]] = {'id': edge[0], 'label': edge[0], 'value': 1}
+			else:
+				nodes[edge[0]]['value'] += 1
+
+			# Check if the to node already exists
+			if edge[1] not in nodes:
+				nodes[edge[1]] = {'id': edge[1], 'label': edge[1], 'value': 1}
+			else:
+				nodes[edge[1]]['value'] += 1
+
+			# Increment the connection count if the connection exists for both from and to nodes
+			if edge[0] in connections and edge[1] in connections:
+				connections[edge[0]] += 1
+				connections[edge[1]] += 1
+			else:
+				connections[edge[0]] = 1
+				connections[edge[1]] = 1
+
+		# Convert nodes dictionary to a list of dictionaries
+		nodes_list = list(nodes.values())
+
+		# Use k-means clustering to cluster the nodes based on their connections
+		cluster_count = 5  # set the number of clusters
+		nodes_matrix = np.array([[node['value']] for node in nodes_list])
+		kmeans = KMeans(n_clusters=cluster_count, random_state=0).fit(nodes_matrix)
+		clusters = kmeans.labels_
+
+		# Assign a cluster ID to each node
+		for i in range(len(nodes_list)):
+			nodes_list[i]['group'] = clusters[i]
+
+		# Convert nodes and edges data to JSON
+		nodes_data = json.dumps(nodes_list, default=str)
+		edges_data = json.dumps([{'from': edge[0], 'to': edge[1]} for edge in edges])
+
+		output['research']['nodes_data'] = Markup(nodes_data)
+		output['research']['edges_data'] = Markup(edges_data)
+
+	else:
+		output['research'] = data[11]
+	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_bibliometric_author', output = output)	
 
 
 
