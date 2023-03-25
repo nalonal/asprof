@@ -33,6 +33,8 @@
                 <a class="nav-link" href="{{ url_for('literature_review_bb_author', id=id) }}">SNA Author</a>
                 <a class="nav-link active" href="{{ url_for('literature_review_bb', id=id) }}">SNA Keyword</a>
               </nav>
+                <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
+                <button id="save_bibliometric_diagram" class="btn-lg btn-success">Store All Image</button><br><br>
                 <div id="mynetwork"></div>
             </main>
             
@@ -43,7 +45,27 @@
     </div>
     <!-- COL-12 -->
   </div>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script>
+
+$(document).on("click",'#save_bibliometric_diagram',function(){
+        html2canvas($("#mynetwork")[0]).then((canvas) => {
+            var imgData = canvas.toDataURL('image/png');
+            var id = $("#input_research_id"). val();
+            $.ajax({
+              type: "POST",
+              url: root+'/literature_review/slr/bibliometric_update_keyword',
+              data: {'id':id,'img_data': imgData},
+              success: function(response) {
+                $('.float-message-wait').hide();
+                $('.float-message-success').show();
+                setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+              }
+            });
+      });
+    });
+
+
 var nodesDataSet = new vis.DataSet({{output['research']['nodes_data']}});
 var edgesDataSet = new vis.DataSet({{output['research']['edges_data']}});
 // Set options for the network

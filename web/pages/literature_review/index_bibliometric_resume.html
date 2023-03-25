@@ -36,55 +36,383 @@
                 
               <br><br>
               <div id="sample">
+                <input type="hidden" class="form-control" id="input_research_id" value="{{ id }}">
+                {% if(output['research']['diagram_per_year']) %}
+                <button id="save_bibliometric_diagram_all" class="btn-lg btn-success">Let's Bibliometric Analysis</button><br><br>
                 <p><strong style="font-size: 28px;">PRISMA Diagram</strong>&nbsp;&nbsp;
-                <button id="SaveButton" onclick="save()">Save</button>
+                {% else %}
+                <button id="save_bibliometric_diagram" class="btn-lg btn-success">Sorry, You Dont Have Any Data. So, Get Data</button>
+                {% endif %}
+                <button id="SaveButton" onclick="save()" hidden>Save</button>
                 <button onclick="load()" hidden>Load</button>
-                <button onclick="makeSVG()">Render as SVG</button>
                 </p>
-                <div style="width:800px; white-space:nowrap;">
+                <div class="myFlowchart" style="width:800px; white-space:nowrap;">
                   <span style="width:80%">
                     <div id="myDiagramDiv" style="height: 500px"></div>
                   </span>
                 </div>
-                <textarea id="mySavedModel" style="width:100%;height:300px" hidden>{ "class": "go.GraphLinksModel",
-                  "linkFromPortIdProperty": "fromPort",
-                  "linkToPortIdProperty": "toPort",
-                  "nodeDataArray": [ 
-                {"key":-11, "loc":"155.00000000000006 -2.0000000000000018", "text":"X Studies Found"},
-                {"key":-3, "loc":"155.00000000000006 90", "text":"total X of records"},
-                {"key":-4, "loc":"346.00000000000017 90.00000000000004", "text":"X Off Duplicates, Inaccessible, Irrelevant, Records Excluded"},
-                {"key":-5, "loc":"154.99999999999994 195.99999999999994", "text":"x of Records after duplicates, irrelevant, inaccessible material removed"},
-                {"key":-6, "loc":"-75 201", "category":"Yellowish", "text":"Screening"},
-                {"key":-7, "loc":"-79.00000000000011 95", "category":"Yellowish", "text":"Eligibility"},
-                {"key":-8, "loc":"-80 -2.999999999999943", "category":"Yellowish", "text":"Identification"},
-                {"key":-9, "loc":"-76 301.9999999999998", "category":"Yellowish", "text":"Included"},
-                {"key":-10, "loc":"357.99999999999994 195.99999999999994", "text":"x of Ineligible records excluded"},
-                {"key":-12, "loc":"154.99999999999994 302.99999999999994", "text":"x of studies included for qualitative and quantitative analysis and synthesis"}
-                 ],
-                  "linkDataArray": [ 
-                {"from":-11, "to":-3, "fromPort":"B", "toPort":"T", "points":[155.00000000000006,14.437724304199214,155.00000000000006,24.437724304199214,155.00000000000006,43.99999999999997,154.99999999999994,43.99999999999997,154.99999999999994,63.562275695800736,154.99999999999994,73.56227569580074]},
-                {"from":-3, "to":-4, "fromPort":"R", "toPort":"L", "points":[223.77915954589838,89.99999999999996,233.77915954589838,89.99999999999996,247.4362907409668,89.99999999999996,247.4362907409668,90,261.0934219360352,90,271.0934219360352,90]},
-                {"from":-3, "to":-5, "fromPort":"B", "toPort":"T", "points":[154.99999999999994,106.43772430419918,154.99999999999994,116.43772430419918,154.99999999999994,131.0934135437011,154.99999999999994,131.0934135437011,154.99999999999994,145.74910278320306,154.99999999999994,155.74910278320306]},
-                {"from":-5, "to":-10, "fromPort":"R", "toPort":"L", "points":[238.86505889892572,195.99999999999994,248.86505889892572,195.99999999999994,256.3013534545898,195.99999999999994,256.3013534545898,195.99999999999994,263.73764801025385,195.99999999999994,273.73764801025385,195.99999999999994]},
-                {"from":-5, "to":-12, "fromPort":"B", "toPort":"T", "points":[154.99999999999994,236.2508972167968,154.99999999999994,246.2508972167968,154.99999999999994,249.49999999999994,154.99999999999994,249.49999999999994,154.99999999999994,252.74910278320306,154.99999999999994,262.74910278320306]}
-                 ]}
+                <textarea id="mySavedModel" style="width:100%;height:300px" hidden>{{ output['research']['string_flowchart'] }}
                 </textarea>
-                
-                <div id="SVGArea"></div>
-                
+                <div>
+                </div>
+                <div id="out_image"></div>
               </div>
+              {% if(output['research']['diagram_per_year']) %}
+              <table style="font-size: 14px; padding:5px;  margin:10px">
+                <tr>
+                  <th style="text-align: center;">Source</th>
+                  <th style="text-align: center;">Identification</th>
+                  <th style="text-align: center;">Screening</th>
+                  <th style="text-align: center;">Eligibility</th>
+                  <th style="text-align: center;">Included</th>
+                </tr>
+                {% for _ in output['research']['per_stages'] %}
+                <tr>
+                  <td>{{ _ }}</td>
+                  <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 1'] }}</td>
+                  <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 3'] }}</td>
+                  <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 4'] }}</td>
+                  <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 5'] }}</td>
+                </tr>
+                {% endfor %}
+              </table>
               <p><strong style="font-size: 28px;">Per Year Diagram</strong></p>
-              {{ output['research']['barplot'] }}
-              <p><strong style="font-size: 28px;">Per Source Diagram</strong></p>
-              {{ output['research']['piechart'] }}
-              <p><strong style="font-size: 28px;">Per Author Diagram</strong></p>
-              {{ output['research']['author'] }}
-              <p><strong style="font-size: 28px;">Per Keyword Diagram</strong></p>
-              {{ output['research']['keyword'] }}
-              <p><strong style="font-size: 28px;">Keyword String</strong></p>
-              {{ output['research']['keyword_string'] }}
+              <img src="{{ output['research']['diagram_per_year'] }}" alt="Your Image">
+              <table style="font-size: 14px; padding:5px;  margin:10px">
 
-             
+                <tr>
+                  <th>Source</th>
+                  {% for __ in output['research']['per_year']['year'] %}
+                  <th>{{ __ }}</th>
+                  {% endfor %}
+                </tr> 
+                <tr>
+                  <td>Count</td>
+                  {% for __ in output['research']['per_year']['data']['all'] %}
+                  <td>{{ output['research']['per_year']['data']['all'][__] }}</td>
+                  {% endfor %}
+                </tr>
+              </table>
+              {% endif %}
+ 
+                
+
+              {% if(output['research']['diagram_per_year_paper']) %}
+              <p><strong style="font-size: 28px;">Per Year Per Source Diagram</strong></p>
+              <img src="{{ output['research']['diagram_per_year_paper'] }}" alt="Your Image">
+              <table style="font-size: 14px;padding:5px;  margin:10px">
+
+                <tr>
+                  <th>Source</th>
+                  {% for __ in output['research']['per_year']['year'] %}
+                  <th>{{ __ }}</th>
+                  {% endfor %}
+                </tr>
+                
+                {% for __ in output['research']['per_year']['data'] %}
+                <tr>
+                  <td>{{ __ }}</td>
+                  {% for _ in output['research']['per_year']['year'] %}
+                  <td style="text-align: center;">{{ output['research']['per_year']['data'][__][_] }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </table>
+              {% endif %}
+              
+              
+              {% if(output['research']['diagram_per_source']) %}
+              <p><strong style="font-size: 28px;">Per Source Diagram</strong></p>
+              <img src="{{ output['research']['diagram_per_source'] }}" alt="Your Image">
+              <table style="font-size: 14px; padding:5px;  margin:10px">
+                <tr>
+                  <th>Source</th>
+                  {% for _ in output['research']['per_publisher'] %}
+                  <th>{{ _ }}</th>
+                  {% endfor %}
+                </tr>
+              
+                <tr>
+                  <td>Total</td>
+                  {% for _ in output['research']['per_publisher'] %}
+                  <td style="text-align:center">{{ output['research']['per_publisher'][_] }}</td>
+                  {% endfor %}
+                </tr>
+              </table>
+              {% endif %}
+
+              {% if(output['research']['diagram_per_author']) %}
+              <p><strong style="font-size: 28px;">Top 10 Author</strong></p>
+              <img src="{{ output['research']['diagram_per_author'] }}" alt="Your Image">
+              <table style="font-size: 14px; padding:5px;  margin:10px">
+                <tr>
+                  {% for _ in output['research']['per_author']['columns'] %}
+                  <th>{{ _ }}</th>
+                  {% endfor %}
+                </tr>
+              
+                {% for _ in output['research']['per_author']['data'] %}
+                <tr>
+                  {% for __ in _%}
+                  <td>{{ __ }}</td>
+                  {% endfor %}
+                  
+                </tr>
+                {% endfor %}
+                
+              </table> 
+              {% endif %}
+  
+              {% if(output['research']['diagram_per_keyword']) %}
+              <p><strong style="font-size: 28px;">Per Keyword Diagram</strong></p>
+              <img src="{{ output['research']['diagram_per_keyword'] }}" alt="Your Image">
+              <table style="font-size: 14px; padding:5px;  margin:10px">
+                <tr>
+                  {% for _ in output['research']['per_keyword']['columns'] %}
+                  <th>{{ _ }}</th>
+                  {% endfor %}
+                </tr>
+              
+                {% for _ in output['research']['per_keyword']['data'] %}
+                <tr>
+                  {% for __ in _%}
+                  <td>{{ __ }}</td>
+                  {% endfor %}
+                  
+                </tr>
+                {% endfor %}
+                
+              </table> 
+              {% endif %}
+              
+  
+              {% if(output['research']['diagram_sna_keyword']) %}
+              <br><br>
+              <p><strong style="font-size: 28px;">Keyword Social Network Analysis</strong></p>
+              <img src="{{ output['research']['diagram_sna_keyword'] }}" width="80%" alt="Your Image">    
+              {% endif %} 
+        
+              
+              {% if output['research']['per_journal'] != null %}
+              <p><strong style="font-size: 28px;">All Detail Bibliometric</strong></p>
+              <div class="container" style="color:black; font-size:14px">
+
+                <details>
+                    <summary>Keyword Search</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px; margin:10px">
+                      <tr>
+                        <th>Source</th>
+                        <th>Keyword</th>
+                      </tr>
+                      {% for _ in output['research']['result_keyword'] %}
+                      <tr>
+                        <td>{{ _ }}</td>
+                        <td>{{ output['research']['result_keyword'][_] }}</td>
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </div>
+                </details>
+                <br>
+                <details>
+                    <summary>Research Stages</summary>
+                    <div>
+                      <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                        <tr>
+                          <th style="text-align: center;">Source</th>
+                          <th style="text-align: center;">Identification</th>
+                          <th style="text-align: center;">Screening</th>
+                          <th style="text-align: center;">Eligibility</th>
+                          <th style="text-align: center;">Included</th>
+                        </tr>
+                        {% for _ in output['research']['per_stages'] %}
+                        <tr>
+                          <td>{{ _ }}</td>
+                          <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 1'] }}</td>
+                          <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 3'] }}</td>
+                          <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 4'] }}</td>
+                          <td style="text-align: center;">{{ output['research']['per_stages'][_]['Stage 5'] }}</td>
+                        </tr>
+                        {% endfor %}
+                      </table>
+                    </div>
+                </details>
+                <br>
+                <details>
+                  <summary>Primary Study</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                      <tr>
+                        <th>Journal</th>
+                        <th>Title</th>
+                        <th>Year</th>
+                        <th>Source</th>
+                        <!-- <th>Number Citation</th> -->
+                      </tr>
+                      {% for _ in output['research']['per_journal'] %}
+                      {% for __ in output['research']['per_journal'][_] %}
+                      <tr>
+                        <td>{{ _ }}</td>
+                        <td>{{ output['research']['per_journal'][_][__]['title'] }}</td>
+                        <td>{{ output['research']['per_journal'][_][__]['year'] }}</td>
+                        <td>{{ output['research']['per_journal'][_][__]['source'] }}</td>
+                      </tr>
+                      {% endfor %}
+                      {% endfor %}
+                    </table>
+                  </div>
+                </details>
+
+                <br>
+                <details>
+                  <summary>Research Per Year/Source</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+
+                      <tr>
+                        <th>Source</th>
+                        {% for __ in output['research']['per_year']['year'] %}
+                        <th>{{ __ }}</th>
+                        {% endfor %}
+                      </tr>
+                      
+                      {% for __ in output['research']['per_year']['data'] %}
+                      <tr>
+                        <td>{{ __ }}</td>
+                        {% for _ in output['research']['per_year']['year'] %}
+                        <td style="text-align: center;">{{ output['research']['per_year']['data'][__][_] }}</td>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                    </table>
+                  </div>
+                </details>
+
+                <br>
+                <details>
+                  <summary>Research Per Source</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                      <tr>
+                        <th>Source</th>
+                        {% for _ in output['research']['per_publisher'] %}
+                        <th>{{ _ }}</th>
+                        {% endfor %}
+                      </tr>
+                    
+                      <tr>
+                        <td>Total</td>
+                        {% for _ in output['research']['per_publisher'] %}
+                        <td style="text-align:center">{{ output['research']['per_publisher'][_] }}</td>
+                        {% endfor %}
+          
+                      </tr>
+                    </table>
+                  </div>
+                </details>
+
+
+                <br>
+                <details>
+                  <summary>Top Journal</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                      <tr>
+                        {% for _ in output['research']['per_scimagojr']['columns'] %}
+                        <th>{{ _ }}</th>
+                        {% endfor %}
+                      </tr>
+                    
+                      {% for _ in output['research']['per_scimagojr']['data'] %}
+                      <tr>
+                        {% for __ in _%}
+                        <td>{{ __ }}</td>
+                        {% endfor %}
+                        
+                      </tr>
+                      {% endfor %}
+                      
+                    </table>
+                  </div>
+                </details>
+
+                <br>
+                <details>
+                  <summary>Top Citation Hit</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                      <tr>
+                        {% for _ in output['research']['per_citiedby']['columns'] %}
+                        <th>{{ _ }}</th>
+                        {% endfor %}
+                      </tr>
+                    
+                      {% for _ in output['research']['per_citiedby']['data'] %}
+                      <tr>
+                        {% for __ in _%}
+                        <td>{{ __ }}</td>
+                        {% endfor %}
+                        
+                      </tr>
+                      {% endfor %}
+                      
+                    </table>    
+                  </div>
+                </details>
+
+                <br>
+                <details>
+                  <summary>Top Keyword</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                      <tr>
+                        {% for _ in output['research']['per_keyword']['columns'] %}
+                        <th>{{ _ }}</th>
+                        {% endfor %}
+                      </tr>
+                    
+                      {% for _ in output['research']['per_keyword']['data'] %}
+                      <tr>
+                        {% for __ in _%}
+                        <td>{{ __ }}</td>
+                        {% endfor %}
+                        
+                      </tr>
+                      {% endfor %}
+                      
+                    </table>    
+                  </div>
+                </details>
+
+                <br>
+                <details>
+                  <summary>Top Author</summary>
+                  <div>
+                    <table style="font-size: 14px; width: 80%; padding:5px;  margin:10px">
+                      <tr>
+                        {% for _ in output['research']['per_author']['columns'] %}
+                        <th>{{ _ }}</th>
+                        {% endfor %}
+                      </tr>
+                    
+                      {% for _ in output['research']['per_author']['data'] %}
+                      <tr>
+                        {% for __ in _%}
+                        <td>{{ __ }}</td>
+                        {% endfor %}
+                        
+                      </tr>
+                      {% endfor %}
+                      
+                    </table>   
+                  </div>
+                </details>
+                
+                </div>  
+                
+                {% endif %}
+              
             </main>
             
         </div>
@@ -94,8 +422,46 @@
     </div>
     <!-- COL-12 -->
   </div>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
   <script>
+    $(document).on("click",'#save_bibliometric_diagram',function(){
+        html2canvas($(".myFlowchart")[0]).then((canvas) => {
+            var imgData = canvas.toDataURL('image/png');
+            var id = $("#input_research_id"). val();
+            $('.float-message-wait').show();
+            $.ajax({
+              type: "POST",
+              url: root+'/literature_review/slr/bibliometric_update',
+              data: {'id':id,'img_data': imgData},
+              success: function(response) {
+                location.reload();
+                $('.float-message-wait').hide();
+                $('.float-message-success').show();
+                setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+                location.reload();
+              }
+            });
+      });
+    });
+    $(document).on("click",'#save_bibliometric_diagram_all',function(){
+        html2canvas($(".myFlowchart")[0]).then((canvas) => {
+            var imgData = canvas.toDataURL('image/png');
+            var id = $("#input_research_id"). val();
+            $('.float-message-wait').show();
+            $.ajax({
+              type: "POST",
+              url: root+'/literature_review/slr/bibliometric_update_all',
+              data: {'id':id,'img_data': imgData},
+              success: function(response) {
+                $('.float-message-wait').hide();
+                $('.float-message-success').show();
+                setTimeout(() => { $('.float-message-success').hide(); }, 5000);
+                location.reload();
+              }
+            });
+      });
+    });
     function init() {
     if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
     var $ = go.GraphObject.make;  // for conciseness in defining templates
@@ -172,12 +538,13 @@
         // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
         $(go.Panel, "Auto",
           $(go.Shape, "Rectangle",
-            { fill: "#00A9C9", stroke: null },
+            { width: "20", fill: "#FFFFFF", stroke: "black" },
             new go.Binding("figure", "figure")),
           $(go.TextBlock,
             {
-              font: "bold 11pt Helvetica, Arial, sans-serif",
-              stroke: lightText,
+              text: "alignment: Center",
+              font: "bold 9pt Helvetica, Arial, sans-serif",
+              stroke: "black",
               margin: 8,
               maxSize: new go.Size(160, NaN),
               wrap: go.TextBlock.WrapFit,

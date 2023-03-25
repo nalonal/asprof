@@ -22,3 +22,5 @@ mpld3
 bibtexparser
 scikit-learn
 squarify
+minio
+unidecode

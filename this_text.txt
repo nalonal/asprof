@@ -21,6 +21,4 @@ INSERT INTO `research_slr` (`id`, `research_title`, `research_author`, `research
 
 https://www.sciencedirect.com/search?qs=%22systematic%20literature%20review%22%20OR%20%22SLR%22%20OR%20%22systematic%20review%22&articleTypes=REV%2CFLA&lastSelectedFacet=years&subjectAreas=2200&years=2022%2C2021%2C2020%2C2023%2C2019
 
-
-P04ZS3laQ6aIbNJWdrNgv724hGZs04De
-qgIdvaM4TnhVT2iT
+docker run -p 9000:9000 -d -p 9001:9001 -e "MINIO_ROOT_USER=minioadmin" -e "MINIO_ROOT_PASSWORD=minioadmin" quay.io/minio/minio server /data --console-address ":9001"

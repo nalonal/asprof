@@ -38,13 +38,10 @@ import undetected_chromedriver as uc
 from fake_useragent import UserAgent
 from stem import Signal
 from stem.control import Controller
-
 from collections import OrderedDict
-
 import pandas as pd
 import json
 from pandas import json_normalize
-
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -63,10 +60,25 @@ import base64
 import seaborn
 import bibtexparser
 import squarify
-
 import numpy as np
 from sklearn.cluster import KMeans
 import json
+import io
+
+from minio import Minio
+from minio.error import S3Error
+from matplotlib.colors import ListedColormap
+
+import uuid
+import squarify
+from unidecode import unidecode
+
+minio_client = Minio(
+    endpoint="34.135.234.149:9000",
+    access_key="sRgI9EBxbZRafm1s",
+    secret_key="CMGcRb6M9sXi3yzUdVpYVQ8XL0zg3UTR",
+    secure=False  # True if using HTTPS
+)
 
 def anti_ascii(input_array):
         output = []
@@ -148,7 +160,7 @@ class GetOpenAPI(threading.Thread):
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
         def request_ai(self, question):
-                openai.api_key = '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'
+                openai.api_key = ''
                 response = openai.Completion.create(
                         model="text-davinci-003",
                         prompt=question,
@@ -714,13 +726,16 @@ def dbcon():
         )
         curr = conn.cursor()
         curr.execute('''CREATE TABLE IF NOT EXISTS research_slr\
-                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20), research_map text, summary text, research_question text, research_identification text, research_question_list_template text);''')
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_title text, research_author text, research_introduction text, research_literature text, research_methodology text, research_keyword text, created_date text, output text, status char(20), research_map text, summary text, research_question text, research_identification text, research_question_list_template text, details text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS config\
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, title text, category text, value text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS paragraph_tb\
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, category text, paragraph_json text, status text);''')
+
+        curr.execute('''CREATE TABLE IF NOT EXISTS file_upload\
+                (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, path text, description text);''')
 
         curr.execute('''CREATE TABLE IF NOT EXISTS references_tb\
                 (id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, paragraph_id text, title text, link text, resume text, keyword text, doi text, bibtex text, year text, status text, relevant text);''')
