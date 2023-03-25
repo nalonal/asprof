@@ -721,91 +721,6 @@ def literature_review_slr_save_review():
 	conn.commit()
 	return Response(json.dumps(data),status=200, mimetype='application/json')
 
-
-
-@app.route('/literature_review/slr/generate_research',methods = ['POST'])
-@cross_origin()
-def literature_review_generate_research():
-
-	"""
-	text_header => <h2><strong>Implementation Big Data For National Security and Intelligence Agency</strong></h2><hr />
-	text_author => <p><strong>Author:</strong></p><p>Rizqy Rionaldy</p><hr />
-	text_abstract => <p><strong>Abstract:</strong></p><p>&nbsp;</p><hr />
-	text_introduction => <p><strong>Introduction:</strong></p><p>&nbsp;</p><hr />
-	text_literature => <p><strong>Literature Review:</strong></p><p>&nbsp;</p><hr />
-	text_methods => <p><strong>Research Methods:</strong></p><p>&nbsp;</p><hr />
-	text_result => <p><strong>Result:</strong></p><p>&nbsp;</p><hr />
-	text_discussion => <p><strong>Discussion:</strong></p><p>&nbsp;</p><hr />
-	text_conclusion => <p><strong>Conclusion:</strong></p><p>&nbsp;</p><hr />
-	text_references => <p><strong>References:</strong></p><p>&nbsp;</p>
-	text_paper => all
-	"""
-	
-	output = {}
-	conn = dbcon()
-	cur = conn.cursor(buffered=True)
-	data = request.get_json()
-	id = data['research_id']
-	cur.execute("select * from research_slr where id="+id)
-	research_slr = cur.fetchone()
-	research_slr_html = json.loads(research_slr[15])
-
-	text_header = "<h2><strong>"+research_slr[1]+"</strong></h2><hr />"
-	text_author = "<p><strong>Author:</strong></p><p>"+research_slr[2]+"</p><hr />"
-	text_abstract = "<p><strong>Abstract:</strong></p><p>&nbsp;</p><hr />"
-
-	##############
-	#INTRODUCTION#
-	##############
-	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='introduction'")
-	paragraph_tb_introduction = cur.fetchone()
-	paragraph_tb_introduction = json.loads(paragraph_tb_introduction[0])
-	text_introduction = "<p><strong>Introduction:</strong></p><p>"
-	for _per in paragraph_tb_introduction:
-		text_introduction = text_introduction + str(paragraph_tb_introduction[_per])
-	text_introduction = text_introduction+"</p><hr />"
-
-
-	##############
-	#LITERATURE#
-	##############
-	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='literature'")
-	paragraph_tb_literature = cur.fetchone()
-	paragraph_tb_literature = json.loads(paragraph_tb_literature[0])
-	text_literature = "<p><strong>Literature Review:</strong></p><p>"
-	for _per in paragraph_tb_literature:
-		text_literature = text_literature + str(paragraph_tb_literature[_per])
-	text_literature = text_literature+"</p><hr />"
-
-
-	##############
-	#METHODS#
-	##############
-	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='methodology'")
-	paragraph_tb_methodology = cur.fetchone()
-	paragraph_tb_methodology = json.loads(paragraph_tb_methodology[0])
-	text_methodology = "<p><strong>Research Methods:</strong></p><p>"
-	for _per in paragraph_tb_methodology:
-		text_methodology = text_methodology + str(paragraph_tb_methodology[_per])
-	text_methodology = text_methodology+research_slr_html['table_result_keyword']
-	text_methodology = text_methodology+research_slr_html['diagram_flowchart']+'<br>'
-	text_methodology = text_methodology+research_slr_html['table_per_stages']+'<br>'
-	text_methodology = text_methodology+research_slr_html['table_per_year_paper']+'<br>'
-	text_methodology = text_methodology+"</p><hr />"
-
-
-	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
-	related_papers = cur.fetchall()
-
-	## UPDATE DATABASE
-	text_paper = text_header+text_author+text_abstract+text_introduction+text_literature+text_methodology
-	cur.execute('UPDATE research_slr SET output=%s WHERE id=%s',[text_paper,id])
-	conn.commit()
-	
-	return Response(json.dumps(research_slr),status=200, mimetype='application/json')
-
-	## START HERE
-
 @app.route('/literature_review/<id>/bb')
 def literature_review_bb(id):
 	output = {}
@@ -1024,20 +939,22 @@ def literature_bibliometric_all():
 	id = request.form['id']
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
-	literature_review_slr_result_crawling(id)
-	file_diagram_per_year_paper = diagram_per_year_paper(id)
-	update_file(file_diagram_per_year_paper,id,"diagram_per_year_paper",".png")
-	file_diagram_per_year = diagram_per_year(id)
-	update_file(file_diagram_per_year,id,"diagram_per_year",".png")
-	file_diagram_per_source = diagram_per_source(id)
-	update_file(file_diagram_per_source,id,"diagram_per_source",".png")
-	file_diagram_per_author = diagram_per_author(id)
-	update_file(file_diagram_per_author,id,"diagram_per_author",".png")
-	file_diagram_per_keyword = diagram_per_keyword(id)
-	update_file(file_diagram_per_keyword,id,"diagram_per_keyword",".png")
-	file_diagram_flowchart = io.BytesIO(base64.b64decode(img_data))
-	file_diagram_flowchart.seek(0)
-	update_file(file_diagram_flowchart,id,"diagram_flowchart",".png")
+	
+	## Sengaja Dimatikan
+	# literature_review_slr_result_crawling(id)
+	# file_diagram_per_year_paper = diagram_per_year_paper(id)
+	# update_file(file_diagram_per_year_paper,id,"diagram_per_year_paper",".png")
+	# file_diagram_per_year = diagram_per_year(id)
+	# update_file(file_diagram_per_year,id,"diagram_per_year",".png")
+	# file_diagram_per_source = diagram_per_source(id)
+	# update_file(file_diagram_per_source,id,"diagram_per_source",".png")
+	# file_diagram_per_author = diagram_per_author(id)
+	# update_file(file_diagram_per_author,id,"diagram_per_author",".png")
+	# file_diagram_per_keyword = diagram_per_keyword(id)
+	# update_file(file_diagram_per_keyword,id,"diagram_per_keyword",".png")
+	# file_diagram_flowchart = io.BytesIO(base64.b64decode(img_data))
+	# file_diagram_flowchart.seek(0)
+	# update_file(file_diagram_flowchart,id,"diagram_flowchart",".png")
 	summary_to_detail(id)
 	return Response(json.dumps({'id':id}),status=200, mimetype='application/json')
 
@@ -1075,5 +992,148 @@ def literature_bibliometric_keyword():
 	file_diagram_flowchart.seek(0)
 	update_file(file_diagram_flowchart,id,"diagram_sna_keyword",".png")
 	return Response(json.dumps({'id':id}),status=200, mimetype='application/json')
+
+
+@app.route('/literature_review/slr/generate_research',methods = ['POST'])
+@cross_origin()
+def literature_review_generate_research():
+
+	"""
+	text_header => <h2><strong>Implementation Big Data For National Security and Intelligence Agency</strong></h2><hr />
+	text_author => <p><strong>Author:</strong></p><p>Rizqy Rionaldy</p><hr />
+	text_abstract => <p><strong>Abstract:</strong></p><p>&nbsp;</p><hr />
+	text_introduction => <p><strong>Introduction:</strong></p><p>&nbsp;</p><hr />
+	text_literature => <p><strong>Literature Review:</strong></p><p>&nbsp;</p><hr />
+	text_methods => <p><strong>Research Methods:</strong></p><p>&nbsp;</p><hr />
+	text_result => <p><strong>Result:</strong></p><p>&nbsp;</p><hr />
+	text_discussion => <p><strong>Discussion:</strong></p><p>&nbsp;</p><hr />
+	text_conclusion => <p><strong>Conclusion:</strong></p><p>&nbsp;</p><hr />
+	text_references => <p><strong>References:</strong></p><p>&nbsp;</p>
+	text_paper => all
+	"""
+	
+	output = {}
+	conn = dbcon()
+	cur = conn.cursor(buffered=True)
+	data = request.get_json()
+	id = data['research_id']
+	cur.execute("select * from research_slr where id="+id)
+	research_slr = cur.fetchone()
+	research_slr_html = json.loads(research_slr[15])
+
+	text_header = "<h2><strong>"+research_slr[1]+"</strong></h2><hr />"
+	text_author = "<p><strong>Author:</strong></p><p>"+research_slr[2]+"</p><hr />"
+	text_abstract = "<p><strong>Abstract:</strong></p><p>&nbsp;</p><hr />"
+
+	##############
+	#INTRODUCTION#
+	##############
+	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='introduction'")
+	paragraph_tb_introduction = cur.fetchone()
+	paragraph_tb_introduction = json.loads(paragraph_tb_introduction[0])
+	text_introduction = "<p><strong>Introduction:</strong></p><p>"
+	for _per in paragraph_tb_introduction:
+		text_introduction += str(paragraph_tb_introduction[_per])
+	text_introduction += "</p><hr />"
+
+
+	##############
+	#LITERATURE#
+	##############
+	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='literature'")
+	paragraph_tb_literature = cur.fetchone()
+	paragraph_tb_literature = json.loads(paragraph_tb_literature[0])
+	text_literature = "<p><strong>Literature Review:</strong></p><p>"
+	for _per in paragraph_tb_literature:
+		text_literature += str(paragraph_tb_literature[_per])
+	text_literature += "</p><hr />"
+
+
+	##############
+	#METHODS#
+	##############
+	cur.execute("select paragraph_json from paragraph_tb where research_id="+id+" AND category='methodology'")
+	paragraph_tb_methodology = cur.fetchone()
+	paragraph_tb_methodology = json.loads(paragraph_tb_methodology[0])
+	text_methodology = "<p><strong>Research Methods:</strong></p><p>"
+	for _per in paragraph_tb_methodology:
+		text_methodology += str(paragraph_tb_methodology[_per])
+	text_methodology += research_slr_html['table_result_keyword']
+	text_methodology += research_slr_html['diagram_flowchart']+'<br>'
+
+	text_methodology += research_slr_html['table_per_stages']+'<br>'
+	naration_table_per_stages = request_ai(research_slr_html['table_per_stages']+'<br>'+'give descriptive statistic this data')
+	text_methodology += naration_table_per_stages
+	text_methodology += "</p><hr />"
+
+	##############
+	#Result#
+	##############
+	text_result = "<p><strong>Result:</strong></p><p>"
+
+	naration_table_primary_study = request_ai(research_slr_html['table_primary_study']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_primary_study
+	text_result += research_slr_html['table_primary_study']+'<br>'
+
+	naration_table_per_year = request_ai(research_slr_html['table_per_year']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_year
+	text_result += research_slr_html['table_per_year']
+	text_result += research_slr_html['diagram_per_year']+'<br>'
+
+	naration_table_per_year_paper = request_ai(research_slr_html['table_per_year_paper']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_year_paper
+	text_result += research_slr_html['table_per_year_paper']
+	text_result += research_slr_html['diagram_per_year_paper']+'<br>'
+
+	naration_table_per_source = request_ai(research_slr_html['table_per_source']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_source
+	text_result += research_slr_html['table_per_source']
+	text_result += research_slr_html['diagram_per_source']+'<br>'
+
+	naration_table_per_scimagojr = request_ai(research_slr_html['table_per_scimagojr']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_scimagojr
+	text_result += research_slr_html['table_per_scimagojr']+'<br>'
+
+	naration_table_per_citiedby = request_ai(research_slr_html['table_per_citiedby']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_year_paper
+	text_result += research_slr_html['table_per_citiedby']
+	text_result += research_slr_html['diagram_per_author']+'<br>'
+
+	naration_table_per_author = request_ai(research_slr_html['table_per_author']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_author
+	text_result += research_slr_html['table_per_author']
+	text_result += research_slr_html['diagram_per_keyword']+'<br>'
+
+	naration_table_per_keyword = request_ai(research_slr_html['table_per_keyword']+'<br>'+'give descriptive statistic this data')
+	text_result += naration_table_per_keyword
+	text_result += research_slr_html['table_per_keyword']
+	text_result += research_slr_html['diagram_sna_keyword']+'<br>'
+	text_result += "</p><hr />"
+	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
+	related_papers = cur.fetchall()
+
+	##############
+	#Discussion#
+	##############
+	text_discussion = "<p><strong>Discussion:</strong></p><p>"
+	text_discussion += "</p><hr />"
+
+	##############
+	#Conclusion#
+	##############
+	text_conclusion = "<p><strong>Conclusion:</strong></p><p>"
+	text_conclusion += "</p><hr />"
+
+	##############
+	#References#
+	##############
+	text_references = "<p><strong>References:</strong></p><p>"
+	text_references += "</p><hr />"
+
+	## UPDATE DATABASE
+	text_paper = text_header+text_author+text_abstract+text_introduction+text_literature+text_methodology+text_result+text_discussion+text_references
+	cur.execute('UPDATE research_slr SET output=%s WHERE id=%s',[text_paper,id])
+	conn.commit()
+	return Response(json.dumps(research_slr),status=200, mimetype='application/json')
 
 app.run(host="0.0.0.0", debug = True) if __name__ == '__main__' else "Error"

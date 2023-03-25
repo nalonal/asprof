@@ -80,6 +80,21 @@ minio_client = Minio(
     secure=False  # True if using HTTPS
 )
 
+def request_ai(question):
+        openai.api_key = ''
+        response = openai.Completion.create(
+                model="text-davinci-003",
+                prompt=question,
+                temperature=0.9,
+                max_tokens=150,
+                top_p=1,
+                frequency_penalty=0.0,
+                presence_penalty=0.6,
+                stop=[" Human:", " AI:"]
+        )
+        return response['choices'][0]['text'].replace("\n\n","") 
+
+
 def anti_ascii(input_array):
         output = []
         for _ in input_array:
@@ -159,19 +174,20 @@ class GetOpenAPI(threading.Thread):
                         else:
                                 return 'Service unavailable.', 'file unavailable', 'unknown year'
 
-        def request_ai(self, question):
-                openai.api_key = ''
-                response = openai.Completion.create(
-                        model="text-davinci-003",
-                        prompt=question,
-                        temperature=0.9,
-                        max_tokens=150,
-                        top_p=1,
-                        frequency_penalty=0.0,
-                        presence_penalty=0.6,
-                        stop=[" Human:", " AI:"]
-                )
-                return response['choices'][0]['text'].replace("\n\n","") 
+        # def request_ai(self, question):
+        #         openai.api_key = ''
+        #         response = openai.Completion.create(
+        #                 model="text-davinci-003",
+        #                 prompt=question,
+        #                 temperature=0.9,
+        #                 max_tokens=150,
+        #                 top_p=1,
+        #                 frequency_penalty=0.0,
+        #                 presence_penalty=0.6,
+        #                 stop=[" Human:", " AI:"]
+        #         )
+        #         return response['choices'][0]['text'].replace("\n\n","") 
+
         def looking_scholar(self,input_keyword):
                 conn = dbcon()
                 cur = conn.cursor()
@@ -189,7 +205,7 @@ class GetOpenAPI(threading.Thread):
                 soup=BeautifulSoup(response.content,'lxml')
                 if len(soup.select('[data-lid]')) == 0:
                         change_sentence = 'short this sentence "'+input_keyword+'"'
-                        response_word = self.request_ai(change_sentence)
+                        response_word = request_ai(change_sentence)
                         this_keyword = urllib.parse.quote(response_word).replace("%20", "+") 
                         url = "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q="+this_keyword+"+%28site%3Adl.acm.org+OR+site%3Aieeexplore.ieee.org+OR+site%3Asciencedirect.com+OR+site%3Alink.springer.com%29&hl=id&as_sdt=0%2C5&as_ylo=2018&as_yhi=2022"
                         # response=requests.get(url,headers=self.headers)
@@ -264,7 +280,7 @@ class GetOpenAPI(threading.Thread):
                 # # id INTEGER PRIMARY KEY AUTO_INCREMENT, research_id text, category text, paragraph_json text, status text
                 introduction_result = {}
                 for _ in research_introduction.split("\n"):
-                        introduction_result[_] = self.request_ai(_)
+                        introduction_result[_] = request_ai(_)
                 introduction_result = json.dumps(introduction_result)
                 # print(introduction_result)
 
@@ -274,7 +290,7 @@ class GetOpenAPI(threading.Thread):
 
                 literature_result = {}
                 for _ in research_literature.split("\n"):
-                        literature_result[_] = self.request_ai(_)
+                        literature_result[_] = request_ai(_)
                 literature_result = json.dumps(literature_result)
                 # print(literature_result)
                 
@@ -283,7 +299,7 @@ class GetOpenAPI(threading.Thread):
                 conn.commit()
                 methodology_result = {}
                 for _ in research_methodology.split("\n"):
-                        methodology_result[_] = self.request_ai(_)
+                        methodology_result[_] = request_ai(_)
                 methodology_result = json.dumps(methodology_result)
                 # print(literature_result)
                 

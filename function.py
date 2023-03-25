@@ -26,10 +26,11 @@ def summary_to_detail(id):
 	detail['diagram_per_source'] = '<img src="'+get_file_url(id,'diagram_per_source')+'" alt="Your Image">'
 	detail['diagram_per_author'] = '<img src="'+get_file_url(id,'diagram_per_author')+'" alt="Your Image">'
 	detail['diagram_per_keyword'] = '<img src="'+get_file_url(id,'diagram_per_keyword')+'" alt="Your Image">'
-	detail['diagram_sna_keyword'] = '<img src="'+get_file_url(id,'diagram_sna_keyword')+'" alt="Your Image">'
+	if(get_file_url(id,'diagram_sna_keyword')):
+		detail['diagram_sna_keyword'] = '<img width="70%" src="'+get_file_url(id,'diagram_sna_keyword')+'" alt="Your Image">'
 	
 	##Research Query
-	_table = """<table style="width: 80%; padding:5px; margin:10px">
+	_table = """<table style="width: 80%; padding:5px">
                       <tr>
                         <th>Source</th>
                         <th>Keyword</th>
@@ -42,7 +43,7 @@ def summary_to_detail(id):
 	detail['table_result_keyword'] = _table
 
 	##table_per_stages
-	_table = """<table style="padding:5px;margin:10px">
+	_table = """<table style="padding:5px;">
                 <tr>
                   <th style="text-align: center;">Source</th>
                   <th style="text-align: center;">Identification</th>
@@ -63,8 +64,8 @@ def summary_to_detail(id):
 	_all_table_content = _table+_table_content+'</table>'
 	detail['table_per_stages'] = _all_table_content
 
-	##table_per_year_paper
-	_table = """<table style="padding:5px;  margin:10px"><tr><th>Source</th>"""
+	##table_per_year
+	_table = """<table style="padding:5px;"><tr><th>Source</th>"""
 	_whitespace = ""
 	for __ in output['research']['per_year']['year']:
 		_temp = '<th>'+str(__)+'</th>'
@@ -75,7 +76,142 @@ def summary_to_detail(id):
 		_temp = '<td>'+str(output['research']['per_year']['data']['all'][__])+'</td>'
 		_whitespace = _whitespace + _temp
 	_table = _table+_whitespace+'</tr></table>'
+	detail['table_per_year'] = _table
+
+
+	##table_primary_study
+	_table = """<table style="font-size: 14px; width: 80%; padding:5px">
+                      <tr>
+                        <th>Journal</th>
+                        <th>Title</th>
+                        <th>Year</th>
+                        <th>Source</th></tr>"""
+	_whitespace = ""
+	for _ in output['research']['per_journal']:
+		for __ in output['research']['per_journal'][_]:
+			_temp = '<tr><td>'+str(_)+'</td><td>'+str(output['research']['per_journal'][_][__]['title'])+'</td><td>'+str(output['research']['per_journal'][_][__]['year'])+'</td><td>'+str(output['research']['per_journal'][_][__]['source'])+'</tr>'
+			_whitespace += _temp
+	_table += _whitespace+'</table>'
+	detail['table_primary_study'] = _table
+
+	##table_per_year_source
+	_table = """<table style="font-size: 14px; padding:5px;">
+                      <tr>
+                        <th>Source</th>"""
+	_whitespace = ""
+	for __ in output['research']['per_year']['year']:
+		_temp = '<th>'+str(__)+'</th>'
+		_whitespace += _temp
+	_table += _whitespace
+
+	_whitespace = ""
+	for __ in output['research']['per_year']['data']:
+		_temp = '<tr><td>'+str(__)+'</td>'
+		_whitespace_2 = ''
+		for _ in output['research']['per_year']['year']:
+			try:
+				_temp_td = '<td style="text-align: center;">'+str(output['research']['per_year']['data'][str(__)][str(_)])+'</td>'
+			except:
+				_temp_td = '<td style="text-align: center;">0</td>'
+			_whitespace_2 += _temp_td
+		_whitespace += _temp+_whitespace_2+'</tr>'
+	_table += _whitespace+'</table>'
 	detail['table_per_year_paper'] = _table
+
+	##table_per_source
+	_table = """<table style="font-size: 14px; padding:5px;">
+                      <tr>
+                        <th>Source</th>"""
+	_whitespace = ""
+	for _ in output['research']['per_publisher']:
+		_temp = '<th>'+str(_)+'</th>'
+		_whitespace += _temp
+	_table += _whitespace+'</tr>'
+
+	_whitespace = "<tr><td>Total</td>"
+	for _ in output['research']['per_publisher']:
+		_temp = '<td style="text-align:center">'+str(output['research']['per_publisher'][_])+'</td>'
+		_whitespace += _temp
+	_table += _whitespace+'<tr></table>'
+	detail['table_per_source'] = _table
+
+
+	## per_scimagojr
+	_table = '<table style="font-size: 14px; padding:5px;"><tr>'
+	_whitespace = ""
+	for _ in output['research']['per_scimagojr']['columns']:
+		_temp = '<th>'+str(_)+'</th>'
+		_whitespace += _temp
+	_table += _whitespace+'</tr>'
+
+	_whitespace = ""
+	for _ in output['research']['per_scimagojr']['data']:
+		_whitespace_2 = ""
+		for __ in _:
+			_temp_td = '<td>'+str(__)+'</td>'
+			_whitespace_2 += _temp_td
+		_whitespace += '<tr>'+_whitespace_2+'</tr>'
+	_table += _whitespace +'</table>'
+	detail['table_per_scimagojr'] = _table
+
+	## per_citiedby
+	_table = '<table style="font-size: 14px; padding:5px;"><tr>'
+	_whitespace = ""
+	for _ in output['research']['per_citiedby']['columns']:
+		_temp = '<th>'+str(_)+'</th>'
+		_whitespace += _temp
+	_table += _whitespace+'</tr>'
+
+	_whitespace = ""
+	for _ in output['research']['per_citiedby']['data'][0:9]:
+		_whitespace_2 = ""
+		for __ in _:
+			_temp_td = '<td>'+str(__)+'</td>'
+			_whitespace_2 += _temp_td
+		_whitespace += '<tr>'+_whitespace_2+'</tr>'
+	_table += _whitespace +'</table>'
+	detail['table_per_citiedby'] = _table
+
+	## per_author
+	_table = '<table style="font-size: 14px; padding:5px;"><tr>'
+	_whitespace = ""
+	for _ in output['research']['per_author']['columns']:
+		_temp = '<th>'+str(_)+'</th>'
+		_whitespace += _temp
+	_table += _whitespace+'</tr>'
+
+	_whitespace = ""
+	for _ in output['research']['per_author']['data'][0:9]:
+		_whitespace_2 = ""
+		for __ in _:
+			_temp_td = '<td>'+str(__)+'</td>'
+			_whitespace_2 += _temp_td
+		_whitespace += '<tr>'+_whitespace_2+'</tr>'
+	_table += _whitespace +'</table>'
+	detail['table_per_author'] = _table
+
+	## per_keyword	
+	_table = '<table style="font-size: 14px; padding:5px;"><tr>'
+	_whitespace = ""
+	for _ in output['research']['per_keyword']['columns']:
+		_temp = '<th>'+str(_)+'</th>'
+		_whitespace += _temp
+	_table += _whitespace+'</tr>'
+
+	_whitespace = ""
+	for _ in output['research']['per_keyword']['data'][0:9]:
+		_whitespace_2 = ""
+		for __ in _:
+			_temp_td = '<td>'+str(__)+'</td>'
+			_whitespace_2 += _temp_td
+		_whitespace += '<tr>'+_whitespace_2+'</tr>'
+	_table += _whitespace +'</table>'
+	detail['table_per_keyword'] = _table
+		
+
+
+
+
 
 
 	cur.execute('UPDATE research_slr SET details=%s WHERE id=%s',[json.dumps(detail),id])
