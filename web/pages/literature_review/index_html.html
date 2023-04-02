@@ -19,6 +19,12 @@
       <div class="container bootdey">
         <div class="email-app">
             <main style="color:black">
+                  {% if(output['bibtex'])%}
+                  <a href="{{ output['bibtex'] }}" target="_blank"><button id="output_save_research" style="float:right" class="btn btn-warning btn-sm">Download Bibtex</button></a>
+                  {% endif %}
+                  {% if(output['bibtex'])%}
+                  <a href="{{ output['zip'] }}" target="_blank"><button id="output_save_research" style="float:right" class="btn btn-success btn-sm">Download Zip</button></a>
+                  {% endif %}
                 {{ output['html'] }}
             </main>
         </div>

@@ -72,6 +72,7 @@ from matplotlib.colors import ListedColormap
 import uuid
 import squarify
 from unidecode import unidecode
+import zipfile
 
 minio_client = Minio(
     endpoint="34.135.234.149:9000",
@@ -314,11 +315,13 @@ class GetOpenAPI(threading.Thread):
                 cur.execute("select * from references_tb where research_id="+self.id)
                 for _ in cur.fetchall():
                         id = _[0]
-                        title = _[3] 
-                        doi, bibtex, year = self.doi_file(title)
-                        # print(year)
-                        cur.execute('UPDATE references_tb SET doi=%s, bibtex=%s, year=%s,  status=%s WHERE id=%s',[doi, bibtex, year, 'finished',id])
-                        conn.commit()
+                        title = _[3]
+                        try: 
+                                doi, bibtex, year = self.doi_file(title)
+                                cur.execute('UPDATE references_tb SET doi=%s, bibtex=%s, year=%s,  status=%s WHERE id=%s',[doi, bibtex, year, 'finished',id])
+                                conn.commit()
+                        except:
+                                pass                        
 
         def run(self):
                 self.get_ai()

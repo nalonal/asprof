@@ -438,7 +438,25 @@ def literature_review_io(id):
 	cur = conn.cursor(buffered=True)
 	cur.execute("select * from research_slr where id="+id)
 	data = cur.fetchone()
+
+	cur.execute("select * from file_upload where research_id="+id+" AND description='bibtex'")
+	bibtex = cur.fetchone()
+	try:
+		url = minio_client.presigned_get_object("asprof", bibtex[2])
+		output['bibtex'] = url
+	except:
+		output['bibtex'] = False
+
+	cur.execute("select * from file_upload where research_id="+id+" AND description='zip'")
+	zip = cur.fetchone()
+	try:
+		url = minio_client.presigned_get_object("asprof", zip[2])
+		output['zip'] = url
+	except:
+		output['zip'] = False
+
 	output['data'] = data
+	
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_output', output = output)	
 	
 
@@ -454,6 +472,14 @@ def literature_review_html(id):
 	data = cur.fetchone()
 	output['data'] = data
 	output['html'] = Markup(data[8])
+
+	cur.execute("select * from file_upload where research_id="+id+" AND description='bibtex'")
+	bibtex = cur.fetchone()
+	try:
+		url = minio_client.presigned_get_object("asprof", bibtex[2])
+		output['bibtex'] = url
+	except:
+		output['bibtex'] = False
 	return render_template(setup.PATH_TEMPLATE, id = id, title=title, page='literature_review', view_file='index_html', output = output)	
 	
 
@@ -939,22 +965,20 @@ def literature_bibliometric_all():
 	id = request.form['id']
 	cur.execute("select * from slr_tb where research_id="+id+" AND relevant='related'")
 	related_papers = cur.fetchall()
-	
-	## Sengaja Dimatikan
-	# literature_review_slr_result_crawling(id)
-	# file_diagram_per_year_paper = diagram_per_year_paper(id)
-	# update_file(file_diagram_per_year_paper,id,"diagram_per_year_paper",".png")
-	# file_diagram_per_year = diagram_per_year(id)
-	# update_file(file_diagram_per_year,id,"diagram_per_year",".png")
-	# file_diagram_per_source = diagram_per_source(id)
-	# update_file(file_diagram_per_source,id,"diagram_per_source",".png")
-	# file_diagram_per_author = diagram_per_author(id)
-	# update_file(file_diagram_per_author,id,"diagram_per_author",".png")
-	# file_diagram_per_keyword = diagram_per_keyword(id)
-	# update_file(file_diagram_per_keyword,id,"diagram_per_keyword",".png")
-	# file_diagram_flowchart = io.BytesIO(base64.b64decode(img_data))
-	# file_diagram_flowchart.seek(0)
-	# update_file(file_diagram_flowchart,id,"diagram_flowchart",".png")
+	literature_review_slr_result_crawling(id)
+	file_diagram_per_year_paper = diagram_per_year_paper(id)
+	update_file(file_diagram_per_year_paper,id,"diagram_per_year_paper",".png")
+	file_diagram_per_year = diagram_per_year(id)
+	update_file(file_diagram_per_year,id,"diagram_per_year",".png")
+	file_diagram_per_source = diagram_per_source(id)
+	update_file(file_diagram_per_source,id,"diagram_per_source",".png")
+	file_diagram_per_author = diagram_per_author(id)
+	update_file(file_diagram_per_author,id,"diagram_per_author",".png")
+	file_diagram_per_keyword = diagram_per_keyword(id)
+	update_file(file_diagram_per_keyword,id,"diagram_per_keyword",".png")
+	file_diagram_flowchart = io.BytesIO(base64.b64decode(img_data))
+	file_diagram_flowchart.seek(0)
+	update_file(file_diagram_flowchart,id,"diagram_flowchart",".png")
 	summary_to_detail(id)
 	return Response(json.dumps({'id':id}),status=200, mimetype='application/json')
 
@@ -997,7 +1021,6 @@ def literature_bibliometric_keyword():
 @app.route('/literature_review/slr/generate_research',methods = ['POST'])
 @cross_origin()
 def literature_review_generate_research():
-
 	"""
 	text_header => <h2><strong>Implementation Big Data For National Security and Intelligence Agency</strong></h2><hr />
 	text_author => <p><strong>Author:</strong></p><p>Rizqy Rionaldy</p><hr />
@@ -1011,7 +1034,6 @@ def literature_review_generate_research():
 	text_references => <p><strong>References:</strong></p><p>&nbsp;</p>
 	text_paper => all
 	"""
-	
 	output = {}
 	conn = dbcon()
 	cur = conn.cursor(buffered=True)
@@ -1062,8 +1084,8 @@ def literature_review_generate_research():
 	text_methodology += research_slr_html['diagram_flowchart']+'<br>'
 
 	text_methodology += research_slr_html['table_per_stages']+'<br>'
-	naration_table_per_stages = request_ai(research_slr_html['table_per_stages']+'<br>'+'give descriptive statistic this data')
-	text_methodology += naration_table_per_stages
+	# naration_table_per_stages = request_ai(research_slr_html['table_per_stages']+'<br>'+'give descriptive statistic this data')
+	# text_methodology += naration_table_per_stages
 	text_methodology += "</p><hr />"
 
 	##############
@@ -1071,41 +1093,41 @@ def literature_review_generate_research():
 	##############
 	text_result = "<p><strong>Result:</strong></p><p>"
 
-	naration_table_primary_study = request_ai(research_slr_html['table_primary_study']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_primary_study
+	# naration_table_primary_study = request_ai(research_slr_html['table_primary_study']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_primary_study
 	text_result += research_slr_html['table_primary_study']+'<br>'
 
-	naration_table_per_year = request_ai(research_slr_html['table_per_year']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_year
+	# naration_table_per_year = request_ai(research_slr_html['table_per_year']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_year
 	text_result += research_slr_html['table_per_year']
 	text_result += research_slr_html['diagram_per_year']+'<br>'
 
-	naration_table_per_year_paper = request_ai(research_slr_html['table_per_year_paper']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_year_paper
+	# naration_table_per_year_paper = request_ai(research_slr_html['table_per_year_paper']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_year_paper
 	text_result += research_slr_html['table_per_year_paper']
 	text_result += research_slr_html['diagram_per_year_paper']+'<br>'
 
-	naration_table_per_source = request_ai(research_slr_html['table_per_source']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_source
+	# naration_table_per_source = request_ai(research_slr_html['table_per_source']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_source
 	text_result += research_slr_html['table_per_source']
 	text_result += research_slr_html['diagram_per_source']+'<br>'
 
-	naration_table_per_scimagojr = request_ai(research_slr_html['table_per_scimagojr']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_scimagojr
+	# naration_table_per_scimagojr = request_ai(research_slr_html['table_per_scimagojr']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_scimagojr
 	text_result += research_slr_html['table_per_scimagojr']+'<br>'
 
-	naration_table_per_citiedby = request_ai(research_slr_html['table_per_citiedby']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_year_paper
+	# naration_table_per_citiedby = request_ai(research_slr_html['table_per_citiedby']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_year_paper
 	text_result += research_slr_html['table_per_citiedby']
 	text_result += research_slr_html['diagram_per_author']+'<br>'
 
-	naration_table_per_author = request_ai(research_slr_html['table_per_author']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_author
+	# naration_table_per_author = request_ai(research_slr_html['table_per_author']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_author
 	text_result += research_slr_html['table_per_author']
 	text_result += research_slr_html['diagram_per_keyword']+'<br>'
 
-	naration_table_per_keyword = request_ai(research_slr_html['table_per_keyword']+'<br>'+'give descriptive statistic this data')
-	text_result += naration_table_per_keyword
+	# naration_table_per_keyword = request_ai(research_slr_html['table_per_keyword']+'<br>'+'give descriptive statistic this data')
+	# text_result += naration_table_per_keyword
 	text_result += research_slr_html['table_per_keyword']
 	text_result += research_slr_html['diagram_sna_keyword']+'<br>'
 	text_result += "</p><hr />"
@@ -1131,9 +1153,70 @@ def literature_review_generate_research():
 	text_references += "</p><hr />"
 
 	## UPDATE DATABASE
-	text_paper = text_header+text_author+text_abstract+text_introduction+text_literature+text_methodology+text_result+text_discussion+text_references
+	text_paper = text_header+text_author+text_abstract+text_introduction+text_literature+text_methodology+text_result+text_conclusion+text_discussion+text_references
+
+	### TEST REFERENCES
+	cur.execute("select * from references_tb where research_id="+id+" AND bibtex is not null")
+	related_papers = cur.fetchall()
+	last_keyword = ""
+	all_references = {}
+	string_bibtex = ""
+	for _ in related_papers:
+		keyword = _[6]
+		_title = str(_[3]).replace("[PDF]","").replace("[HTML]","")[0:25]+'...'
+		if(keyword != last_keyword):
+			all_references[keyword] = ""
+			last_keyword = keyword
+		my_text = '<a href="'+str(_[4])+'">('+_title+','+str(_[9])+')</a> '
+		all_references[keyword] += my_text
+	
+	for __ in all_references:
+		# print(__)
+		text_to_replace = __ +" "+ Markup(all_references[__])
+		text_paper = text_paper.replace(__,text_to_replace)
+
+	## UPDATE DATABASE 2
 	cur.execute('UPDATE research_slr SET output=%s WHERE id=%s',[text_paper,id])
 	conn.commit()
+
+
+	## Download All Bibtext
+	cur.execute("select * from references_tb where research_id="+id+" AND bibtex is not null")
+	related_papers = cur.fetchall()
+	bib_string = ""
+	for _ in related_papers:
+		bib_string += _[8]
+	cur.execute("select * from slr_tb where research_id="+id+" AND bibtex is not null")
+	related_papers = cur.fetchall()
+	for _ in related_papers:
+		bib_string += _[8]
+	file_data = io.BytesIO(bib_string.encode())
+	update_file(file_data,id,'bibtex',".bib")
+
+
+	## Download All Document
+	cur.execute("select * from file_upload where research_id="+id+" AND description != 'zip'")
+	related_papers = cur.fetchall()
+
+	# Use the MinIO client to download the files
+	file_contents = {}
+	for file_name in related_papers:
+		try:
+			response = minio_client.get_object("asprof", file_name[2])
+			file_contents[file_name[2]] = response.read()
+		except S3Error as err:
+			print(f"Error Minio: {err}")
+	
+	# Create a zip file with the file contents
+	zip_buffer = BytesIO()
+	with zipfile.ZipFile(zip_buffer, mode="w") as zip_file:
+		for file_name, content in file_contents.items():
+			zip_file.writestr(file_name, content)
+
+	# Get the zip file contents as bytes
+	zip_buffer.seek(0)
+	update_file(zip_buffer,id,'zip',".zip")
+	
 	return Response(json.dumps(research_slr),status=200, mimetype='application/json')
 
 app.run(host="0.0.0.0", debug = True) if __name__ == '__main__' else "Error"

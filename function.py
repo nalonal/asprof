@@ -245,6 +245,17 @@ def update_file(fileupload,research_id,category,extension):
     else:
         cur.execute("INSERT INTO file_upload(research_id, path, description) VALUES(%s,%s,%s)",[research_id,path,category])
         conn.commit()
+
+# def upload_file_zip(fileupload,extension):
+# 	object_name = str(uuid.uuid4()) + extension
+# 	path = 'web/'
+# 	object_name = path+object_name
+# 	try:
+# 		# minio_client.put_object("asprof", object_name, data=fileupload, length=fileupload.getbuffer().nbytes)
+# 		minio_client.put_object("asprof",object_name,fileupload.getvalue(),length=fileupload.getbuffer().nbytes,content_type="application/zip")
+# 		return object_name
+# 	except S3Error as e:
+# 		return (f"Error uploading file: {e}") 
     
 def upload_file(fileupload,extension):
 	object_name = str(uuid.uuid4()) + extension
